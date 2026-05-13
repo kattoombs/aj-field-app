@@ -10,9 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    /* ── Reset & Variables ─────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
       --dark:   #140409;
       --bronze: #A27339;
@@ -28,488 +26,86 @@
       --font-display: 'Playfair Display', Georgia, serif;
       --font-body: 'Source Sans 3', system-ui, sans-serif;
     }
-
-    html, body {
-      min-height: 100vh;
-      background: var(--cream);
-      font-family: var(--font-body);
-      color: var(--dark);
-      -webkit-font-smoothing: antialiased;
-    }
-
-    /* ── Header ────────────────────────────────────────── */
-    .app-header {
-      background: var(--dark);
-      padding: 18px 24px 14px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .header-logo {
-      width: 44px;
-      height: 44px;
-      background: var(--bronze);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-display);
-      font-size: 16px;
-      color: var(--cream);
-      font-weight: 700;
-      flex-shrink: 0;
-    }
-    .header-text h1 {
-      font-family: var(--font-display);
-      font-size: 17px;
-      color: var(--cream);
-      line-height: 1.1;
-    }
-    .header-text p {
-      font-size: 11px;
-      color: var(--bronze-light);
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      margin-top: 2px;
-    }
-    .header-admin-btn {
-      margin-left: auto;
-      background: transparent;
-      border: 1px solid rgba(162,115,57,0.4);
-      color: var(--bronze-light);
-      font-size: 12px;
-      padding: 6px 14px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-family: var(--font-body);
-      transition: all 0.2s;
-    }
+    html, body { min-height: 100vh; background: var(--cream); font-family: var(--font-body); color: var(--dark); -webkit-font-smoothing: antialiased; }
+    .app-header { background: var(--dark); padding: 18px 24px 14px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 100; }
+    .header-logo { width: 44px; height: 44px; background: var(--bronze); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 16px; color: var(--cream); font-weight: 700; flex-shrink: 0; }
+    .header-text h1 { font-family: var(--font-display); font-size: 17px; color: var(--cream); line-height: 1.1; }
+    .header-text p { font-size: 11px; color: var(--bronze-light); letter-spacing: 1.5px; text-transform: uppercase; margin-top: 2px; }
+    .header-admin-btn { margin-left: auto; background: transparent; border: 1px solid rgba(162,115,57,0.4); color: var(--bronze-light); font-size: 12px; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-family: var(--font-body); transition: all 0.2s; }
     .header-admin-btn:hover { background: rgba(162,115,57,0.15); }
-
     .bronze-bar { height: 3px; background: var(--bronze); }
-
-    /* ── Main Content ───────────────────────────────────── */
-    .app-body {
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 0 16px 40px;
-    }
-
-    /* ── Home Screen ────────────────────────────────────── */
-    #screen-home {
-      padding-top: 48px;
-    }
-    .home-greeting {
-      text-align: center;
-      margin-bottom: 48px;
-    }
-    .home-greeting h2 {
-      font-family: var(--font-display);
-      font-size: 28px;
-      color: var(--dark);
-    }
-    .home-greeting p {
-      color: #888;
-      font-size: 15px;
-      margin-top: 6px;
-    }
-
-    .home-cards {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    @media (max-width: 480px) {
-      .home-cards { grid-template-columns: 1fr; }
-    }
-
-    .home-card {
-      background: var(--white);
-      border-radius: 16px;
-      padding: 36px 24px;
-      text-align: center;
-      cursor: pointer;
-      box-shadow: var(--shadow);
-      border: 2px solid transparent;
-      transition: all 0.2s ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .home-card:hover, .home-card:active {
-      border-color: var(--bronze);
-      box-shadow: var(--shadow-lg);
-      transform: translateY(-2px);
-    }
-    .home-card .card-icon {
-      width: 64px;
-      height: 64px;
-      border-radius: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 16px;
-      font-size: 28px;
-    }
+    .app-body { max-width: 680px; margin: 0 auto; padding: 0 16px 40px; }
+    #screen-home { padding-top: 48px; }
+    .home-greeting { text-align: center; margin-bottom: 48px; }
+    .home-greeting h2 { font-family: var(--font-display); font-size: 28px; color: var(--dark); }
+    .home-greeting p { color: #888; font-size: 15px; margin-top: 6px; }
+    .home-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 480px) { .home-cards { grid-template-columns: 1fr; } }
+    .home-card { background: var(--white); border-radius: 16px; padding: 36px 24px; text-align: center; cursor: pointer; box-shadow: var(--shadow); border: 2px solid transparent; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
+    .home-card:hover, .home-card:active { border-color: var(--bronze); box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+    .home-card .card-icon { width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 28px; }
     .home-card.tm .card-icon { background: rgba(162,115,57,0.12); }
     .home-card.co .card-icon { background: rgba(20,4,9,0.07); }
-    .home-card h3 {
-      font-family: var(--font-display);
-      font-size: 18px;
-      color: var(--dark);
-      margin-bottom: 6px;
-    }
-    .home-card p {
-      font-size: 13px;
-      color: #888;
-      line-height: 1.4;
-    }
-
-    /* ── Form Screens ───────────────────────────────────── */
+    .home-card h3 { font-family: var(--font-display); font-size: 18px; color: var(--dark); margin-bottom: 6px; }
+    .home-card p { font-size: 13px; color: #888; line-height: 1.4; }
     .form-screen { padding-top: 24px; }
-
-    .form-header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 28px;
-    }
-    .back-btn {
-      background: var(--white);
-      border: 1.5px solid var(--grey);
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 18px;
-      color: var(--dark);
-      flex-shrink: 0;
-      transition: all 0.15s;
-      -webkit-tap-highlight-color: transparent;
-    }
+    .form-header { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+    .back-btn { background: var(--white); border: 1.5px solid var(--grey); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; color: var(--dark); flex-shrink: 0; transition: all 0.15s; -webkit-tap-highlight-color: transparent; }
     .back-btn:hover { background: var(--grey); }
-    .form-title h2 {
-      font-family: var(--font-display);
-      font-size: 22px;
-    }
-    .form-title p {
-      font-size: 13px;
-      color: #888;
-      margin-top: 2px;
-    }
-
-    /* ── Form Fields ────────────────────────────────────── */
-    .form-card {
-      background: var(--white);
-      border-radius: var(--radius);
-      padding: 20px;
-      margin-bottom: 14px;
-      box-shadow: 0 2px 8px rgba(20,4,9,0.06);
-    }
-    .form-card-title {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--bronze);
-      margin-bottom: 14px;
-    }
-
-    .field-group {
-      display: grid;
-      gap: 14px;
-    }
-    .field-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-    @media (max-width: 480px) {
-      .field-row { grid-template-columns: 1fr; }
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-    .field label {
-      font-size: 12px;
-      font-weight: 600;
-      color: #666;
-      letter-spacing: 0.3px;
-    }
+    .form-title h2 { font-family: var(--font-display); font-size: 22px; }
+    .form-title p { font-size: 13px; color: #888; margin-top: 2px; }
+    .form-card { background: var(--white); border-radius: var(--radius); padding: 20px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(20,4,9,0.06); }
+    .form-card-title { font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--bronze); margin-bottom: 14px; }
+    .field-group { display: grid; gap: 14px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 480px) { .field-row { grid-template-columns: 1fr; } }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label { font-size: 12px; font-weight: 600; color: #666; letter-spacing: 0.3px; }
     .field label .req { color: var(--bronze); margin-left: 2px; }
-
-    .field input,
-    .field select,
-    .field textarea {
-      background: var(--cream);
-      border: 1.5px solid var(--grey);
-      border-radius: 8px;
-      padding: 13px 14px;
-      font-size: 16px; /* 16px prevents iOS zoom */
-      font-family: var(--font-body);
-      color: var(--dark);
-      width: 100%;
-      transition: border-color 0.15s;
-      -webkit-appearance: none;
-      appearance: none;
-    }
-    .field input:focus,
-    .field select:focus,
-    .field textarea:focus {
-      outline: none;
-      border-color: var(--bronze);
-      background: var(--white);
-    }
-    .field input.error, .field select.error, .field textarea.error {
-      border-color: var(--red);
-    }
-    .field textarea {
-      resize: vertical;
-      min-height: 90px;
-      line-height: 1.5;
-    }
-    .field select {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23A27339' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 14px center;
-      padding-right: 36px;
-    }
-
-    /* Write-in job field */
-    .writein-field {
-      display: none;
-      margin-top: 8px;
-    }
-    .writein-field.visible { display: flex; flex-direction: column; gap: 5px; }
-
-    /* ── Cost Summary ───────────────────────────────────── */
-    .cost-total-box {
-      background: var(--dark);
-      border-radius: 10px;
-      padding: 16px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 6px;
-    }
-    .cost-total-box span:first-child {
-      font-size: 13px;
-      color: var(--grey);
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-    .cost-total-box .total-amount {
-      font-family: var(--font-display);
-      font-size: 24px;
-      color: var(--bronze-light);
-    }
-
-    /* ── Confirmation Email ─────────────────────────────── */
-    .confirmation-section {
-      background: rgba(162,115,57,0.07);
-      border: 1px solid rgba(162,115,57,0.25);
-      border-radius: 10px;
-      padding: 14px 16px;
-    }
-    .confirmation-section p {
-      font-size: 12px;
-      color: #777;
-      margin-top: 4px;
-    }
-
-    /* ── Submit Button ──────────────────────────────────── */
-    .submit-btn {
-      width: 100%;
-      background: var(--bronze);
-      color: var(--cream);
-      border: none;
-      border-radius: 12px;
-      padding: 18px;
-      font-size: 17px;
-      font-weight: 600;
-      font-family: var(--font-body);
-      cursor: pointer;
-      margin-top: 8px;
-      letter-spacing: 0.3px;
-      transition: all 0.2s;
-      -webkit-tap-highlight-color: transparent;
-    }
+    .field input, .field select, .field textarea { background: var(--cream); border: 1.5px solid var(--grey); border-radius: 8px; padding: 13px 14px; font-size: 16px; font-family: var(--font-body); color: var(--dark); width: 100%; transition: border-color 0.15s; -webkit-appearance: none; appearance: none; }
+    .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--bronze); background: var(--white); }
+    .field textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
+    .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23A27339' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+    .unassigned-note { font-size: 11px; color: #999; margin-top: 4px; font-style: italic; }
+    .cost-total-box { background: var(--dark); border-radius: 10px; padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+    .cost-total-box span:first-child { font-size: 13px; color: var(--grey); font-weight: 600; letter-spacing: 0.5px; }
+    .cost-total-box .total-amount { font-family: var(--font-display); font-size: 24px; color: var(--bronze-light); }
+    .confirmation-section { background: rgba(162,115,57,0.07); border: 1px solid rgba(162,115,57,0.25); border-radius: 10px; padding: 14px 16px; }
+    .confirmation-section p { font-size: 12px; color: #777; margin-top: 4px; }
+    .submit-btn { width: 100%; background: var(--bronze); color: var(--cream); border: none; border-radius: 12px; padding: 18px; font-size: 17px; font-weight: 600; font-family: var(--font-body); cursor: pointer; margin-top: 8px; letter-spacing: 0.3px; transition: all 0.2s; -webkit-tap-highlight-color: transparent; }
     .submit-btn:hover { background: #8a6230; }
     .submit-btn:active { transform: scale(0.98); }
     .submit-btn:disabled { background: var(--grey); color: #999; cursor: not-allowed; }
-
-    /* ── Toast / Status ─────────────────────────────────── */
-    #toast {
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: var(--dark);
-      color: var(--cream);
-      padding: 14px 24px;
-      border-radius: 30px;
-      font-size: 14px;
-      font-weight: 500;
-      box-shadow: var(--shadow-lg);
-      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-      z-index: 999;
-      white-space: nowrap;
-      max-width: 90vw;
-      text-align: center;
-    }
+    #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--dark); color: var(--cream); padding: 14px 24px; border-radius: 30px; font-size: 14px; font-weight: 500; box-shadow: var(--shadow-lg); transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 999; white-space: nowrap; max-width: 90vw; text-align: center; }
     #toast.show { transform: translateX(-50%) translateY(0); }
     #toast.success { background: var(--green); }
     #toast.error { background: var(--red); }
-
-    /* ── Success Screen ─────────────────────────────────── */
-    #screen-success {
-      padding-top: 80px;
-      text-align: center;
-    }
-    .success-icon {
-      width: 80px;
-      height: 80px;
-      background: var(--green);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 36px;
-      margin: 0 auto 24px;
-      animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    @keyframes popIn {
-      from { transform: scale(0); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-    #screen-success h2 {
-      font-family: var(--font-display);
-      font-size: 26px;
-      margin-bottom: 10px;
-    }
-    #screen-success p {
-      color: #777;
-      font-size: 15px;
-      line-height: 1.5;
-      max-width: 320px;
-      margin: 0 auto 32px;
-    }
-    .new-form-btn {
-      display: inline-block;
-      background: var(--dark);
-      color: var(--cream);
-      border: none;
-      border-radius: 12px;
-      padding: 16px 32px;
-      font-size: 16px;
-      font-weight: 600;
-      font-family: var(--font-body);
-      cursor: pointer;
-      transition: opacity 0.2s;
-    }
+    #screen-success { padding-top: 80px; text-align: center; }
+    .success-icon { width: 80px; height: 80px; background: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 36px; margin: 0 auto 24px; animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    #screen-success h2 { font-family: var(--font-display); font-size: 26px; margin-bottom: 10px; }
+    #screen-success p { color: #777; font-size: 15px; line-height: 1.5; max-width: 320px; margin: 0 auto 32px; }
+    .new-form-btn { display: inline-block; background: var(--dark); color: var(--cream); border: none; border-radius: 12px; padding: 16px 32px; font-size: 16px; font-weight: 600; font-family: var(--font-body); cursor: pointer; transition: opacity 0.2s; }
     .new-form-btn:hover { opacity: 0.85; }
-
-    /* ── Admin Screen ───────────────────────────────────── */
     #screen-admin { padding-top: 24px; }
-
-    .admin-login-box {
-      background: var(--white);
-      border-radius: var(--radius);
-      padding: 32px 24px;
-      box-shadow: var(--shadow);
-      max-width: 380px;
-      margin: 40px auto 0;
-    }
-    .admin-login-box h3 {
-      font-family: var(--font-display);
-      font-size: 20px;
-      margin-bottom: 20px;
-    }
-
+    .admin-login-box { background: var(--white); border-radius: var(--radius); padding: 32px 24px; box-shadow: var(--shadow); max-width: 380px; margin: 40px auto 0; }
+    .admin-login-box h3 { font-family: var(--font-display); font-size: 20px; margin-bottom: 20px; }
     .jobs-list { margin-top: 20px; }
-    .job-item {
-      background: var(--white);
-      border-radius: 8px;
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 8px;
-      box-shadow: 0 1px 4px rgba(20,4,9,0.06);
-    }
-    .job-item .job-num {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--bronze);
-      min-width: 110px;
-    }
+    .job-item { background: var(--white); border-radius: 8px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(20,4,9,0.06); }
+    .job-item .job-num { font-size: 12px; font-weight: 600; color: var(--bronze); min-width: 80px; }
     .job-item .job-name { flex: 1; font-size: 14px; }
-    .job-delete-btn {
-      background: none;
-      border: none;
-      color: #ccc;
-      font-size: 18px;
-      cursor: pointer;
-      padding: 4px 8px;
-      border-radius: 4px;
-      transition: color 0.15s;
-    }
+    .job-delete-btn { background: none; border: none; color: #ccc; font-size: 18px; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: color 0.15s; }
     .job-delete-btn:hover { color: var(--red); }
-
-    .add-job-form {
-      background: var(--white);
-      border-radius: var(--radius);
-      padding: 20px;
-      margin-top: 20px;
-      box-shadow: var(--shadow);
-    }
-    .add-job-form h4 {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--bronze);
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      margin-bottom: 14px;
-    }
-    .add-job-row {
-      display: grid;
-      grid-template-columns: 1fr 2fr auto;
-      gap: 10px;
-      align-items: end;
-    }
-    @media (max-width: 480px) {
-      .add-job-row { grid-template-columns: 1fr; }
-    }
-    .add-job-btn {
-      background: var(--bronze);
-      color: var(--cream);
-      border: none;
-      border-radius: 8px;
-      padding: 13px 20px;
-      font-size: 14px;
-      font-weight: 600;
-      font-family: var(--font-body);
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.15s;
-    }
+    .add-job-form { background: var(--white); border-radius: var(--radius); padding: 20px; margin-top: 20px; box-shadow: var(--shadow); }
+    .add-job-form h4 { font-size: 13px; font-weight: 600; color: var(--bronze); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px; }
+    .add-job-row { display: grid; grid-template-columns: 1fr 2fr auto; gap: 10px; align-items: end; }
+    @media (max-width: 480px) { .add-job-row { grid-template-columns: 1fr; } }
+    .add-job-btn { background: var(--bronze); color: var(--cream); border: none; border-radius: 8px; padding: 13px 20px; font-size: 14px; font-weight: 600; font-family: var(--font-body); cursor: pointer; white-space: nowrap; transition: background 0.15s; }
     .add-job-btn:hover { background: #8a6230; }
-
-    /* ── Utility ────────────────────────────────────────── */
     .hidden { display: none !important; }
-    .field-error { font-size: 11px; color: var(--red); margin-top: 2px; }
   </style>
 </head>
 <body>
-
-  <!-- Header -->
   <header class="app-header">
     <div class="header-logo">A&J</div>
     <div class="header-text">
@@ -520,9 +116,9 @@
   </header>
   <div class="bronze-bar"></div>
 
-  <!-- ── HOME SCREEN ──────────────────────────────────────── -->
   <div class="app-body">
 
+    <!-- HOME -->
     <div id="screen-home">
       <div class="home-greeting">
         <h2>What are you submitting?</h2>
@@ -542,7 +138,7 @@
       </div>
     </div>
 
-    <!-- ── T&M FORM ─────────────────────────────────────────── -->
+    <!-- T&M FORM -->
     <div id="screen-tm" class="form-screen hidden">
       <div class="form-header">
         <button class="back-btn" onclick="showScreen('home')">←</button>
@@ -551,9 +147,7 @@
           <p>Time & Material Field Report</p>
         </div>
       </div>
-
       <form id="form-tm" onsubmit="submitForm(event, 'tm')">
-
         <div class="form-card">
           <div class="form-card-title">Job Information</div>
           <div class="field-group">
@@ -565,24 +159,25 @@
               <label>Job <span class="req">*</span></label>
               <select name="job_select" id="tm-job-select" onchange="handleJobSelect('tm')">
                 <option value="">— Select a Job —</option>
-                <option value="__writein__">✎ Write in job name...</option>
               </select>
             </div>
-            <div class="writein-field field" id="tm-writein">
-              <label>Job Name / Description</label>
-              <input type="text" name="job_writein" placeholder="Enter job name or description">
+            <div class="field" id="tm-unassigned-field">
+              <label>If not listed, write in job name</label>
+              <input type="text" name="job_writein" id="tm-writein" placeholder="Enter job name or address">
+              <span class="unassigned-note">Leave blank if you selected a job above</span>
             </div>
             <div class="field">
               <label>General Contractor <span class="req">*</span></label>
-              <input type="text" name="gc_name" placeholder="e.g. Turner Construction" required>
+              <select name="gc_name" id="tm-gc-select" onchange="handleGCSelect('tm')">
+                <option value="">— Select GC —</option>
+              </select>
             </div>
             <div class="field">
-              <label>Job Address <span class="req">*</span></label>
-              <input type="text" name="address" placeholder="123 Main St, San José, CA" required>
+              <label>GC Address</label>
+              <input type="text" name="address" id="tm-address" placeholder="Auto-fills from GC selection">
             </div>
           </div>
         </div>
-
         <div class="form-card">
           <div class="form-card-title">Labor</div>
           <div class="field-group">
@@ -606,7 +201,6 @@
             </div>
           </div>
         </div>
-
         <div class="form-card">
           <div class="form-card-title">Materials</div>
           <div class="field-group">
@@ -616,7 +210,6 @@
             </div>
           </div>
         </div>
-
         <div class="form-card">
           <div class="form-card-title">Cost Summary</div>
           <div class="field-group">
@@ -636,7 +229,6 @@
             </div>
           </div>
         </div>
-
         <div class="form-card">
           <div class="confirmation-section">
             <div class="field">
@@ -646,12 +238,11 @@
             </div>
           </div>
         </div>
-
         <button type="submit" class="submit-btn" id="tm-submit-btn">Send T&M Tag to Office</button>
       </form>
     </div>
 
-    <!-- ── CHANGE ORDER FORM ─────────────────────────────────── -->
+    <!-- CHANGE ORDER FORM -->
     <div id="screen-co" class="form-screen hidden">
       <div class="form-header">
         <button class="back-btn" onclick="showScreen('home')">←</button>
@@ -660,9 +251,7 @@
           <p>Office will add CO# and obtain signatures</p>
         </div>
       </div>
-
       <form id="form-co" onsubmit="submitForm(event, 'co')">
-
         <div class="form-card">
           <div class="form-card-title">Job Information</div>
           <div class="field-group">
@@ -678,24 +267,25 @@
               <label>Job <span class="req">*</span></label>
               <select name="job_select" id="co-job-select" onchange="handleJobSelect('co')">
                 <option value="">— Select a Job —</option>
-                <option value="__writein__">✎ Write in job name...</option>
               </select>
             </div>
-            <div class="writein-field field" id="co-writein">
-              <label>Job Name / Description</label>
-              <input type="text" name="job_writein" placeholder="Enter job name or description">
+            <div class="field" id="co-unassigned-field">
+              <label>If not listed, write in job name</label>
+              <input type="text" name="job_writein" id="co-writein" placeholder="Enter job name or address">
+              <span class="unassigned-note">Leave blank if you selected a job above</span>
             </div>
             <div class="field">
               <label>General Contractor <span class="req">*</span></label>
-              <input type="text" name="gc_name" placeholder="e.g. Turner Construction" required>
+              <select name="gc_name" id="co-gc-select" onchange="handleGCSelect('co')">
+                <option value="">— Select GC —</option>
+              </select>
             </div>
             <div class="field">
-              <label>Job Address <span class="req">*</span></label>
-              <input type="text" name="address" placeholder="123 Main St, San José, CA" required>
+              <label>GC Address</label>
+              <input type="text" name="address" id="co-address" placeholder="Auto-fills from GC selection">
             </div>
           </div>
         </div>
-
         <div class="form-card">
           <div class="form-card-title">Extra Work</div>
           <div class="field-group">
@@ -709,7 +299,6 @@
             </div>
           </div>
         </div>
-
         <div class="form-card">
           <div class="form-card-title">Cost Summary</div>
           <div class="field-group">
@@ -729,7 +318,6 @@
             </div>
           </div>
         </div>
-
         <div class="form-card">
           <div class="confirmation-section">
             <div class="field">
@@ -739,12 +327,11 @@
             </div>
           </div>
         </div>
-
         <button type="submit" class="submit-btn" id="co-submit-btn">Send Change Order to Office</button>
       </form>
     </div>
 
-    <!-- ── SUCCESS SCREEN ───────────────────────────────────── -->
+    <!-- SUCCESS -->
     <div id="screen-success" class="hidden">
       <div class="success-icon">✓</div>
       <h2>Submitted!</h2>
@@ -752,7 +339,7 @@
       <button class="new-form-btn" onclick="showScreen('home')">Submit Another</button>
     </div>
 
-    <!-- ── ADMIN SCREEN ──────────────────────────────────────── -->
+    <!-- ADMIN -->
     <div id="screen-admin" class="hidden">
       <div class="form-header">
         <button class="back-btn" onclick="showScreen('home')">←</button>
@@ -761,7 +348,6 @@
           <p>Manage job list</p>
         </div>
       </div>
-
       <div id="admin-login-section">
         <div class="admin-login-box">
           <h3>Admin Login</h3>
@@ -778,46 +364,126 @@
           </div>
         </div>
       </div>
-
       <div id="admin-panel" class="hidden">
         <div class="add-job-form">
           <h4>Add New Job</h4>
           <div class="add-job-row">
             <div class="field">
-              <label>Job Number</label>
-              <input type="text" id="new-job-num" placeholder="AJ-2025-004">
+              <label>Job #</label>
+              <input type="text" id="new-job-num" placeholder="2624">
             </div>
             <div class="field">
               <label>Job Name</label>
-              <input type="text" id="new-job-name" placeholder="Project Name">
+              <input type="text" id="new-job-name" placeholder="Project Name / Address">
             </div>
             <button class="add-job-btn" onclick="addJob()">+ Add</button>
           </div>
         </div>
-
         <div class="jobs-list" id="admin-jobs-list">
           <p style="color:#888; text-align:center; padding: 20px;">Loading jobs...</p>
         </div>
       </div>
     </div>
 
-  </div><!-- end app-body -->
-
-  <!-- Toast -->
+  </div>
   <div id="toast"></div>
 
   <script>
-    // ── Config ─────────────────────────────────────────────
     const API = window.location.hostname === 'localhost'
       ? 'http://localhost:3001'
-      : 'https://aj-field-app-server.onrender.com'; // Update with your Render URL
+      : 'https://aj-field-app-server.onrender.com';
 
     let adminToken = null;
-    let jobs = [];
+
+    // ── GC Data ────────────────────────────────────────────
+    const GC_LIST = [
+      { name: 'A&J California Builders, Inc.', address: '1261 Lincoln Ave STE106, San Jose, CA 95125' },
+      { name: 'Arco Murray', address: '' },
+      { name: 'Bay Area Builders, Inc.', address: '3360 De La Cruz Blvd., Santa Clara, CA 95054' },
+      { name: 'Brooke Shaw Builder', address: '2324 Shibley Ave., San Jose, CA 95125' },
+      { name: 'Bruce E. Boyle Construction, Inc.', address: '191 Lemoore Drive, San Carlos, CA 94070' },
+      { name: 'BSM Construction, Inc.', address: '2575 Stanwell Dr. Second Floor, Concord, CA 94520' },
+      { name: 'Casaccia Construction', address: '100 Mary Way, Los Gatos, CA 95032' },
+      { name: 'Center-Line Construction, Inc.', address: '918 Washington St., San Carlos, CA 94070' },
+      { name: 'Challenger School', address: '711 E. Gish Rd., San Jose, CA 95112' },
+      { name: 'Citadel, Inc.', address: '75 E. Santa Clara St., San Jose, CA' },
+      { name: 'COBE Construction', address: '498 Salmar Ave., Campbell, CA 95008' },
+      { name: 'Cody Vermette Group, Inc.', address: '1305 Elmer St., Belmont, CA 94002' },
+      { name: 'Constructive Solutions, Inc.', address: '2041 Pioneer Ct. Ste. 208, San Mateo, CA 94403' },
+      { name: 'Decker Engineering & Construction', address: '1261 Lincoln Ave. Ste. 220, San Jose, CA 95125' },
+      { name: 'First Finish, LLC', address: '6240 Old Dobbin Lane STE 190, Columbia, MD 21045' },
+      { name: 'GKW Constructors, Inc.', address: '' },
+      { name: 'Innovative Project Solutions Inc.', address: '50 California St. 15th Floor, San Francisco, CA 94111' },
+      { name: 'J.M. Stitt Construction, Inc.', address: '3165 Palisades Dr., Corona, CA 92878' },
+      { name: 'John Donovan', address: '23005 Del Monte Way, Los Gatos, CA 95030' },
+      { name: 'John Panos', address: 'P.O. BOX 510, San Martin, CA 95046' },
+      { name: 'Kenson Adventures', address: '' },
+      { name: 'Kent Construction', address: '8505 Church St. Ste. 12, Gilroy, CA 95020' },
+      { name: 'La Rinconada Country Club', address: '14595 Clearview Drive, Los Gatos, CA 95032' },
+      { name: 'Lusardi Construction Company', address: '1570 Linda Vista Dr., San Marcos, CA 92078' },
+      { name: 'LWG Construction, Inc.', address: '280 Digital Dr., Morgan Hill, CA 95037' },
+      { name: 'Mike McCloud Construction', address: '1073 Thornton Way, San Jose, CA 95128' },
+      { name: 'Nikki Chan & Mimi Dao', address: '1093 Normandy Drive, Campbell, CA 95008' },
+      { name: 'OPI Commercial Builders, Inc.', address: '1202 Lincoln Avenue, Ste 10, San Jose, CA 95125' },
+      { name: 'Pacific General Construction', address: '1150 Cadillac Court, Milpitas, CA 95035' },
+      { name: 'RL Brackett Construction', address: '3400 De La Cruz Blvd. Unit M, Santa Clara, CA 95054' },
+      { name: 'S.B.C.C.', address: '' },
+      { name: 'Scott Daniels', address: '1540 Miramonte, Los Altos, CA 94024' },
+      { name: 'Seegert Construction', address: '3098 Industrial Blvd, Sacramento, CA 95691' },
+      { name: 'Snipes Construction Inc.', address: '4810 Golden Foothill Pkwy #8, El Dorado Hills, CA 95762' },
+      { name: 'South Bay Construction', address: '1711 Dell Avenue, Campbell, CA 95008' },
+      { name: 'Steed Construction, Inc.', address: '1250 E. Iron Eagle Dr. Ste. 200, Eagle, ID 83616' },
+      { name: 'Steve Casaccia', address: '100 Mary Way, Los Gatos, CA 95032' },
+      { name: 'Suner Corp', address: '' },
+      { name: 'The James Group', address: '7691 Hanna Street, Gilroy, CA 95020' },
+      { name: 'TICO Construction, Inc.', address: '1585 Terminal Ave., San Jose, CA 95112' },
+      { name: 'Valley Design & Construction, Inc.', address: '1180 Coleman Ave., San Jose, CA 95110' },
+      { name: 'WDS Construction', address: '100 Tower Dr., Beaver Dam, WI 53916' },
+      { name: 'West Broadway Building Co.', address: '4590 MacArthur Blvd. Ste. 500, Newport Beach, CA 92660' },
+    ];
+
+    // ── Active Jobs ────────────────────────────────────────
+    const SEED_JOBS = [
+      { num: '2417', name: 'Hilldale Classrooms – 79 Florence St, Daly City' },
+      { num: '2422', name: '1069 Franquette – San Jose' },
+      { num: '2434', name: '11 Athlone – Menlo Park' },
+      { num: '2439', name: 'Saratoga-Sunnyvale – 12200 Saratoga-Sun, Saratoga' },
+      { num: '2442', name: 'Chaucer Street – 570 Chaucer St, Palo Alto' },
+      { num: '2501', name: 'Safeway SF – 190 El Camino Real, San Francisco' },
+      { num: '2503', name: 'Hilldale School A&B – 79 Florence Ave, Daly City' },
+      { num: '2506', name: 'Yang Renovation – 1050 Lily Ave, Sunnyvale' },
+      { num: '2510', name: 'Greenfield – 6502 Greenfield Dr, Gilroy' },
+      { num: '2511', name: 'Excite Curtner – 265 Curtner Ave, San Jose' },
+      { num: '2514', name: 'Everette Ave – 1655 Everette Ave, San Jose' },
+      { num: '2523', name: '2394 Lansford – San Jose' },
+      { num: '2527', name: 'Fremont Swim House – 34075 Fremont Blvd, Fremont' },
+      { num: '2536', name: '563 Crawford – Sunnyvale' },
+      { num: '2601', name: '26471 Weston – Los Altos Hills' },
+      { num: '2602', name: 'Progolis-Milpitas 3 – 475 Sycamore Dr, Milpitas' },
+      { num: '2603', name: "Stanford Job Governor's Corner" },
+      { num: '2604', name: 'San Lazaro Rebuild – 2640 San Lazaro, Sunnyvale' },
+      { num: '2605', name: '2349 Dartmouth – Palo Alto' },
+      { num: '2606', name: 'Inverness Remodel – 509 Inverness Way, Sunnyvale' },
+      { num: '2608', name: 'Cottle Avenue – 2257 Cottle Ave, San Jose' },
+      { num: '2609', name: 'Alexis Drive – 3085 Alexis Dr, Palo Alto' },
+      { num: '2610', name: 'Douglas Ave – 1116 Douglas Ave, Burlingame' },
+      { num: '2612', name: 'ASML Generator – 125 Rio Robles, San Jose' },
+      { num: '2613', name: 'Normandy Awning – 1093 Normandy Dr, Campbell' },
+      { num: '2614', name: 'Waste Connections – 7000 National Dr, Livermore' },
+      { num: '2615', name: 'Foster – 17915 Foster, Los Gatos' },
+      { num: '2617', name: 'Dartmouth – 2349 Dartmouth St, Palo Alto' },
+      { num: '2618', name: 'Verde Vista – 20849 Verde Vista, Saratoga' },
+      { num: '2619', name: 'Live Oak – 650 Live Oak, Menlo Park' },
+      { num: '2620', name: 'Rocket EMS – 2950 Patrick Henry Dr, Santa Clara' },
+      { num: '2621', name: 'La Rinconada CC – 14595 Clearview Dr, Los Gatos' },
+      { num: '2622', name: '154 Laurel Ave – Menlo Park' },
+      { num: '2623', name: '201 Alerche – Los Gatos' },
+    ];
 
     // ── Init ───────────────────────────────────────────────
     window.addEventListener('DOMContentLoaded', () => {
       setTodayDate();
+      populateGCDropdowns();
       loadJobs();
     });
 
@@ -827,83 +493,89 @@
       document.getElementById('co-date').value = today;
     }
 
-    async function loadJobs() {
-      try {
-        const res = await fetch(`${API}/api/jobs`);
-        jobs = await res.json();
-        populateJobDropdowns();
-      } catch (e) {
-        console.warn('Could not load jobs:', e);
-      }
-    }
-
-    function populateJobDropdowns() {
+    function populateGCDropdowns() {
       ['tm', 'co'].forEach(type => {
-        const sel = document.getElementById(`${type}-job-select`);
-        // Clear existing options except first two (blank + write-in)
-        while (sel.options.length > 2) sel.remove(2);
-        // Insert jobs before write-in
-        jobs.forEach(j => {
-          const opt = new Option(`${j.job_number} — ${j.job_name}`, `${j.job_number} — ${j.job_name}`);
-          sel.insertBefore(opt, sel.options[1]);
+        const sel = document.getElementById(`${type}-gc-select`);
+        GC_LIST.forEach(gc => {
+          sel.add(new Option(gc.name, gc.name));
         });
       });
     }
 
-    // ── Screen Navigation ──────────────────────────────────
-    const screens = ['home', 'tm', 'co', 'success', 'admin'];
+    function handleGCSelect(type) {
+      const sel = document.getElementById(`${type}-gc-select`);
+      const gc = GC_LIST.find(g => g.name === sel.value);
+      if (gc && gc.address) {
+        document.getElementById(`${type}-address`).value = gc.address;
+      }
+    }
 
+    async function loadJobs() {
+      let jobs = [];
+      try {
+        const res = await fetch(`${API}/api/jobs`);
+        const serverJobs = await res.json();
+        if (serverJobs && serverJobs.length > 0) {
+          jobs = serverJobs.map(j => ({ num: j.job_number, name: j.job_name }));
+        } else {
+          jobs = SEED_JOBS;
+        }
+      } catch (e) {
+        jobs = SEED_JOBS;
+      }
+      populateJobDropdowns(jobs);
+    }
+
+    function populateJobDropdowns(jobs) {
+      ['tm', 'co'].forEach(type => {
+        const sel = document.getElementById(`${type}-job-select`);
+        while (sel.options.length > 1) sel.remove(1);
+        jobs.forEach(j => {
+          sel.add(new Option(`${j.num} — ${j.name}`, `${j.num} — ${j.name}`));
+        });
+      });
+    }
+
+    function handleJobSelect(type) {
+      // Nothing special needed — write-in field is always visible
+    }
+
+    function getJobValue(type) {
+      const sel = document.getElementById(`${type}-job-select`);
+      const writein = document.getElementById(`${type}-writein`).value.trim();
+      if (sel.value) return sel.value;
+      return writein;
+    }
+
+    // ── Screens ────────────────────────────────────────────
+    const screens = ['home', 'tm', 'co', 'success', 'admin'];
     function showScreen(name) {
       screens.forEach(s => document.getElementById(`screen-${s}`).classList.add('hidden'));
       document.getElementById(`screen-${name}`).classList.remove('hidden');
       window.scrollTo(0, 0);
     }
 
-    // ── Job Select / Write-in ──────────────────────────────
-    function handleJobSelect(type) {
-      const sel = document.getElementById(`${type}-job-select`);
-      const writein = document.getElementById(`${type}-writein`);
-      if (sel.value === '__writein__') {
-        writein.classList.add('visible');
-      } else {
-        writein.classList.remove('visible');
-      }
-    }
-
-    function getJobValue(type) {
-      const sel = document.getElementById(`${type}-job-select`);
-      if (sel.value === '__writein__') {
-        const wi = document.querySelector(`#screen-${type} [name="job_writein"]`);
-        return wi ? wi.value : '';
-      }
-      return sel.value;
-    }
-
-    // ── Auto-calculate totals ──────────────────────────────
+    // ── Totals ─────────────────────────────────────────────
     function updateTotal(type) {
       const mat = parseFloat(document.getElementById(`${type}-mat`).value) || 0;
       const lab = parseFloat(document.getElementById(`${type}-lab`).value) || 0;
       document.getElementById(`${type}-total`).textContent = `$${(mat + lab).toFixed(2)}`;
     }
 
-    // ── Form Submission ────────────────────────────────────
+    // ── Submit ─────────────────────────────────────────────
     async function submitForm(e, type) {
       e.preventDefault();
       const form = document.getElementById(`form-${type}`);
       const btn = document.getElementById(`${type}-submit-btn`);
-
       const job = getJobValue(type);
       if (!job) { showToast('Please select or enter a job name', 'error'); return; }
-
       btn.disabled = true;
       btn.textContent = 'Sending...';
-
       const fd = new FormData(form);
       const data = Object.fromEntries(fd.entries());
       data.job = job;
       delete data.job_select;
       delete data.job_writein;
-
       try {
         const res = await fetch(`${API}/api/submit/${type}`, {
           method: 'POST',
@@ -911,13 +583,10 @@
           body: JSON.stringify(data)
         });
         const result = await res.json();
-
         if (result.success) {
           form.reset();
           setTodayDate();
-          document.getElementById(`${type}-writein`).classList.remove('visible');
           updateTotal(type);
-
           const msg = type === 'co'
             ? 'Change Order sent! Kathie will receive a PDF to add the CO# and signatures.'
             : 'T&M Tag sent to the office successfully.';
@@ -954,9 +623,7 @@
         } else {
           showToast('Invalid credentials', 'error');
         }
-      } catch (e) {
-        showToast('Login failed', 'error');
-      }
+      } catch (e) { showToast('Login failed', 'error'); }
     }
 
     async function loadAdminJobs() {
@@ -968,9 +635,8 @@
         <div class="job-item">
           <span class="job-num">${j.job_number}</span>
           <span class="job-name">${j.job_name}</span>
-          <button class="job-delete-btn" onclick="deleteJob(${j.id})" title="Remove">×</button>
-        </div>
-      `).join('');
+          <button class="job-delete-btn" onclick="deleteJob(${j.id})">×</button>
+        </div>`).join('');
     }
 
     async function addJob() {
