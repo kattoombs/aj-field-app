@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="A&J Field" />
+  <title>A&J Field App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset & Variables ─────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --dark:   #140409;
+      --bronze: #A27339;
+      --bronze-light: #C49A6C;
+      --grey:   #D9D8D6;
+      --cream:  #FFF8F0;
+      --white:  #ffffff;
+      --red:    #c0392b;
+      --green:  #27ae60;
+      --radius: 10px;
+      --shadow: 0 4px 24px rgba(20,4,9,0.12);
+      --shadow-lg: 0 8px 40px rgba(20,4,9,0.18);
+      --font-display: 'Playfair Display', Georgia, serif;
+      --font-body: 'Source Sans 3', system-ui, sans-serif;
+    }
+
+    html, body {
+      min-height: 100vh;
+      background: var(--cream);
+      font-family: var(--font-body);
+      color: var(--dark);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Header ────────────────────────────────────────── */
+    .app-header {
+      background: var(--dark);
+      padding: 18px 24px 14px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-logo {
+      width: 44px;
+      height: 44px;
+      background: var(--bronze);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 16px;
+      color: var(--cream);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .header-text h1 {
+      font-family: var(--font-display);
+      font-size: 17px;
+      color: var(--cream);
+      line-height: 1.1;
+    }
+    .header-text p {
+      font-size: 11px;
+      color: var(--bronze-light);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .header-admin-btn {
+      margin-left: auto;
+      background: transparent;
+      border: 1px solid rgba(162,115,57,0.4);
+      color: var(--bronze-light);
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-family: var(--font-body);
+      transition: all 0.2s;
+    }
+    .header-admin-btn:hover { background: rgba(162,115,57,0.15); }
+
+    .bronze-bar { height: 3px; background: var(--bronze); }
+
+    /* ── Main Content ───────────────────────────────────── */
+    .app-body {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 0 16px 40px;
+    }
+
+    /* ── Home Screen ────────────────────────────────────── */
+    #screen-home {
+      padding-top: 48px;
+    }
+    .home-greeting {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .home-greeting h2 {
+      font-family: var(--font-display);
+      font-size: 28px;
+      color: var(--dark);
+    }
+    .home-greeting p {
+      color: #888;
+      font-size: 15px;
+      margin-top: 6px;
+    }
+
+    .home-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 480px) {
+      .home-cards { grid-template-columns: 1fr; }
+    }
+
+    .home-card {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 36px 24px;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      border: 2px solid transparent;
+      transition: all 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .home-card:hover, .home-card:active {
+      border-color: var(--bronze);
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+    }
+    .home-card .card-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 28px;
+    }
+    .home-card.tm .card-icon { background: rgba(162,115,57,0.12); }
+    .home-card.co .card-icon { background: rgba(20,4,9,0.07); }
+    .home-card h3 {
+      font-family: var(--font-display);
+      font-size: 18px;
+      color: var(--dark);
+      margin-bottom: 6px;
+    }
+    .home-card p {
+      font-size: 13px;
+      color: #888;
+      line-height: 1.4;
+    }
+
+    /* ── Form Screens ───────────────────────────────────── */
+    .form-screen { padding-top: 24px; }
+
+    .form-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .back-btn {
+      background: var(--white);
+      border: 1.5px solid var(--grey);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+      color: var(--dark);
+      flex-shrink: 0;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .back-btn:hover { background: var(--grey); }
+    .form-title h2 {
+      font-family: var(--font-display);
+      font-size: 22px;
+    }
+    .form-title p {
+      font-size: 13px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    /* ── Form Fields ────────────────────────────────────── */
+    .form-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 8px rgba(20,4,9,0.06);
+    }
+    .form-card-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--bronze);
+      margin-bottom: 14px;
+    }
+
+    .field-group {
+      display: grid;
+      gap: 14px;
+    }
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 480px) {
+      .field-row { grid-template-columns: 1fr; }
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .field label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      letter-spacing: 0.3px;
+    }
+    .field label .req { color: var(--bronze); margin-left: 2px; }
+
+    .field input,
+    .field select,
+    .field textarea {
+      background: var(--cream);
+      border: 1.5px solid var(--grey);
+      border-radius: 8px;
+      padding: 13px 14px;
+      font-size: 16px; /* 16px prevents iOS zoom */
+      font-family: var(--font-body);
+      color: var(--dark);
+      width: 100%;
+      transition: border-color 0.15s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      outline: none;
+      border-color: var(--bronze);
+      background: var(--white);
+    }
+    .field input.error, .field select.error, .field textarea.error {
+      border-color: var(--red);
+    }
+    .field textarea {
+      resize: vertical;
+      min-height: 90px;
+      line-height: 1.5;
+    }
+    .field select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23A27339' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+    }
+
+    /* Write-in job field */
+    .writein-field {
+      display: none;
+      margin-top: 8px;
+    }
+    .writein-field.visible { display: flex; flex-direction: column; gap: 5px; }
+
+    /* ── Cost Summary ───────────────────────────────────── */
+    .cost-total-box {
+      background: var(--dark);
+      border-radius: 10px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 6px;
+    }
+    .cost-total-box span:first-child {
+      font-size: 13px;
+      color: var(--grey);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .cost-total-box .total-amount {
+      font-family: var(--font-display);
+      font-size: 24px;
+      color: var(--bronze-light);
+    }
+
+    /* ── Confirmation Email ─────────────────────────────── */
+    .confirmation-section {
+      background: rgba(162,115,57,0.07);
+      border: 1px solid rgba(162,115,57,0.25);
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .confirmation-section p {
+      font-size: 12px;
+      color: #777;
+      margin-top: 4px;
+    }
+
+    /* ── Submit Button ──────────────────────────────────── */
+    .submit-btn {
+      width: 100%;
+      background: var(--bronze);
+      color: var(--cream);
+      border: none;
+      border-radius: 12px;
+      padding: 18px;
+      font-size: 17px;
+      font-weight: 600;
+      font-family: var(--font-body);
+      cursor: pointer;
+      margin-top: 8px;
+      letter-spacing: 0.3px;
+      transition: all 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .submit-btn:hover { background: #8a6230; }
+    .submit-btn:active { transform: scale(0.98); }
+    .submit-btn:disabled { background: var(--grey); color: #999; cursor: not-allowed; }
+
+    /* ── Toast / Status ─────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--dark);
+      color: var(--cream);
+      padding: 14px 24px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 999;
+      white-space: nowrap;
+      max-width: 90vw;
+      text-align: center;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+    #toast.success { background: var(--green); }
+    #toast.error { background: var(--red); }
+
+    /* ── Success Screen ─────────────────────────────────── */
+    #screen-success {
+      padding-top: 80px;
+      text-align: center;
+    }
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background: var(--green);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      margin: 0 auto 24px;
+      animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes popIn {
+      from { transform: scale(0); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    #screen-success h2 {
+      font-family: var(--font-display);
+      font-size: 26px;
+      margin-bottom: 10px;
+    }
+    #screen-success p {
+      color: #777;
+      font-size: 15px;
+      line-height: 1.5;
+      max-width: 320px;
+      margin: 0 auto 32px;
+    }
+    .new-form-btn {
+      display: inline-block;
+      background: var(--dark);
+      color: var(--cream);
+      border: none;
+      border-radius: 12px;
+      padding: 16px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      font-family: var(--font-body);
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .new-form-btn:hover { opacity: 0.85; }
+
+    /* ── Admin Screen ───────────────────────────────────── */
+    #screen-admin { padding-top: 24px; }
+
+    .admin-login-box {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 32px 24px;
+      box-shadow: var(--shadow);
+      max-width: 380px;
+      margin: 40px auto 0;
+    }
+    .admin-login-box h3 {
+      font-family: var(--font-display);
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
+
+    .jobs-list { margin-top: 20px; }
+    .job-item {
+      background: var(--white);
+      border-radius: 8px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 4px rgba(20,4,9,0.06);
+    }
+    .job-item .job-num {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--bronze);
+      min-width: 110px;
+    }
+    .job-item .job-name { flex: 1; font-size: 14px; }
+    .job-delete-btn {
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+    .job-delete-btn:hover { color: var(--red); }
+
+    .add-job-form {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-top: 20px;
+      box-shadow: var(--shadow);
+    }
+    .add-job-form h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--bronze);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .add-job-row {
+      display: grid;
+      grid-template-columns: 1fr 2fr auto;
+      gap: 10px;
+      align-items: end;
+    }
+    @media (max-width: 480px) {
+      .add-job-row { grid-template-columns: 1fr; }
+    }
+    .add-job-btn {
+      background: var(--bronze);
+      color: var(--cream);
+      border: none;
+      border-radius: 8px;
+      padding: 13px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: var(--font-body);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .add-job-btn:hover { background: #8a6230; }
+
+    /* ── Utility ────────────────────────────────────────── */
+    .hidden { display: none !important; }
+    .field-error { font-size: 11px; color: var(--red); margin-top: 2px; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-logo">A&J</div>
+    <div class="header-text">
+      <h1>A&J California Builders</h1>
+      <p>Field Reporting</p>
+    </div>
+    <button class="header-admin-btn" onclick="showScreen('admin')">Admin</button>
+  </header>
+  <div class="bronze-bar"></div>
+
+  <!-- ── HOME SCREEN ──────────────────────────────────────── -->
+  <div class="app-body">
+
+    <div id="screen-home">
+      <div class="home-greeting">
+        <h2>What are you submitting?</h2>
+        <p>Select a form type to get started</p>
+      </div>
+      <div class="home-cards">
+        <div class="home-card tm" onclick="showScreen('tm')">
+          <div class="card-icon">🕐</div>
+          <h3>T&M Tag</h3>
+          <p>Time & Material report from the field</p>
+        </div>
+        <div class="home-card co" onclick="showScreen('co')">
+          <div class="card-icon">📋</div>
+          <h3>Change Order</h3>
+          <p>Extra work — office receives a PDF to fill in CO#</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── T&M FORM ─────────────────────────────────────────── -->
+    <div id="screen-tm" class="form-screen hidden">
+      <div class="form-header">
+        <button class="back-btn" onclick="showScreen('home')">←</button>
+        <div class="form-title">
+          <h2>T&M Tag</h2>
+          <p>Time & Material Field Report</p>
+        </div>
+      </div>
+
+      <form id="form-tm" onsubmit="submitForm(event, 'tm')">
+
+        <div class="form-card">
+          <div class="form-card-title">Job Information</div>
+          <div class="field-group">
+            <div class="field">
+              <label>Date <span class="req">*</span></label>
+              <input type="date" name="date" id="tm-date" required>
+            </div>
+            <div class="field">
+              <label>Job <span class="req">*</span></label>
+              <select name="job_select" id="tm-job-select" onchange="handleJobSelect('tm')">
+                <option value="">— Select a Job —</option>
+                <option value="__writein__">✎ Write in job name...</option>
+              </select>
+            </div>
+            <div class="writein-field field" id="tm-writein">
+              <label>Job Name / Description</label>
+              <input type="text" name="job_writein" placeholder="Enter job name or description">
+            </div>
+            <div class="field">
+              <label>General Contractor <span class="req">*</span></label>
+              <input type="text" name="gc_name" placeholder="e.g. Turner Construction" required>
+            </div>
+            <div class="field">
+              <label>Job Address <span class="req">*</span></label>
+              <input type="text" name="address" placeholder="123 Main St, San José, CA" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="form-card-title">Labor</div>
+          <div class="field-group">
+            <div class="field">
+              <label>Foreman Name <span class="req">*</span></label>
+              <input type="text" name="foreman" placeholder="First Last" required>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label>Crew Count <span class="req">*</span></label>
+                <input type="number" name="crew_count" placeholder="0" min="1" required>
+              </div>
+              <div class="field">
+                <label>Hours <span class="req">*</span></label>
+                <input type="number" name="hours" placeholder="0.0" min="0" step="0.5" required>
+              </div>
+            </div>
+            <div class="field">
+              <label>Work Description <span class="req">*</span></label>
+              <textarea name="description" placeholder="Describe the work performed..." required></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="form-card-title">Materials</div>
+          <div class="field-group">
+            <div class="field">
+              <label>Materials Used</label>
+              <textarea name="materials" placeholder="e.g. 2 – 2x4x8 CDX, 1 box 16d nails..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="form-card-title">Cost Summary</div>
+          <div class="field-group">
+            <div class="field-row">
+              <div class="field">
+                <label>Material Cost ($)</label>
+                <input type="number" name="material_cost" id="tm-mat" placeholder="0.00" min="0" step="0.01" oninput="updateTotal('tm')">
+              </div>
+              <div class="field">
+                <label>Labor Cost ($)</label>
+                <input type="number" name="labor_cost" id="tm-lab" placeholder="0.00" min="0" step="0.01" oninput="updateTotal('tm')">
+              </div>
+            </div>
+            <div class="cost-total-box">
+              <span>TOTAL T&M AMOUNT</span>
+              <span class="total-amount" id="tm-total">$0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="confirmation-section">
+            <div class="field">
+              <label>Your Email (for confirmation)</label>
+              <input type="email" name="submitter_email" placeholder="aaron@ajbuilders.com (optional)">
+              <p>Optional — get a quick confirmation the form was received</p>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="tm-submit-btn">Send T&M Tag to Office</button>
+      </form>
+    </div>
+
+    <!-- ── CHANGE ORDER FORM ─────────────────────────────────── -->
+    <div id="screen-co" class="form-screen hidden">
+      <div class="form-header">
+        <button class="back-btn" onclick="showScreen('home')">←</button>
+        <div class="form-title">
+          <h2>Change Order</h2>
+          <p>Office will add CO# and obtain signatures</p>
+        </div>
+      </div>
+
+      <form id="form-co" onsubmit="submitForm(event, 'co')">
+
+        <div class="form-card">
+          <div class="form-card-title">Job Information</div>
+          <div class="field-group">
+            <div class="field">
+              <label>Date <span class="req">*</span></label>
+              <input type="date" name="date" id="co-date" required>
+            </div>
+            <div class="field">
+              <label>Submitted By <span class="req">*</span></label>
+              <input type="text" name="submitted_by" placeholder="Your name" required>
+            </div>
+            <div class="field">
+              <label>Job <span class="req">*</span></label>
+              <select name="job_select" id="co-job-select" onchange="handleJobSelect('co')">
+                <option value="">— Select a Job —</option>
+                <option value="__writein__">✎ Write in job name...</option>
+              </select>
+            </div>
+            <div class="writein-field field" id="co-writein">
+              <label>Job Name / Description</label>
+              <input type="text" name="job_writein" placeholder="Enter job name or description">
+            </div>
+            <div class="field">
+              <label>General Contractor <span class="req">*</span></label>
+              <input type="text" name="gc_name" placeholder="e.g. Turner Construction" required>
+            </div>
+            <div class="field">
+              <label>Job Address <span class="req">*</span></label>
+              <input type="text" name="address" placeholder="123 Main St, San José, CA" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="form-card-title">Extra Work</div>
+          <div class="field-group">
+            <div class="field">
+              <label>Description of Extra Work <span class="req">*</span></label>
+              <textarea name="description" placeholder="Describe the extra work being requested or performed..." style="min-height: 120px;" required></textarea>
+            </div>
+            <div class="field">
+              <label>Materials</label>
+              <textarea name="materials" placeholder="List materials required..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="form-card-title">Cost Summary</div>
+          <div class="field-group">
+            <div class="field-row">
+              <div class="field">
+                <label>Material Cost ($)</label>
+                <input type="number" name="material_cost" id="co-mat" placeholder="0.00" min="0" step="0.01" oninput="updateTotal('co')">
+              </div>
+              <div class="field">
+                <label>Labor Cost ($)</label>
+                <input type="number" name="labor_cost" id="co-lab" placeholder="0.00" min="0" step="0.01" oninput="updateTotal('co')">
+              </div>
+            </div>
+            <div class="cost-total-box">
+              <span>TOTAL CHANGE ORDER AMOUNT</span>
+              <span class="total-amount" id="co-total">$0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-card">
+          <div class="confirmation-section">
+            <div class="field">
+              <label>Your Email (for confirmation)</label>
+              <input type="email" name="submitter_email" placeholder="aaron@ajbuilders.com (optional)">
+              <p>Optional — get a quick confirmation the form went through</p>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="co-submit-btn">Send Change Order to Office</button>
+      </form>
+    </div>
+
+    <!-- ── SUCCESS SCREEN ───────────────────────────────────── -->
+    <div id="screen-success" class="hidden">
+      <div class="success-icon">✓</div>
+      <h2>Submitted!</h2>
+      <p id="success-msg">Your form was sent to the office successfully.</p>
+      <button class="new-form-btn" onclick="showScreen('home')">Submit Another</button>
+    </div>
+
+    <!-- ── ADMIN SCREEN ──────────────────────────────────────── -->
+    <div id="screen-admin" class="hidden">
+      <div class="form-header">
+        <button class="back-btn" onclick="showScreen('home')">←</button>
+        <div class="form-title">
+          <h2>Admin</h2>
+          <p>Manage job list</p>
+        </div>
+      </div>
+
+      <div id="admin-login-section">
+        <div class="admin-login-box">
+          <h3>Admin Login</h3>
+          <div class="field-group">
+            <div class="field">
+              <label>Username</label>
+              <input type="text" id="admin-username" placeholder="admin">
+            </div>
+            <div class="field">
+              <label>Password</label>
+              <input type="password" id="admin-password" placeholder="••••••••" onkeydown="if(event.key==='Enter') adminLogin()">
+            </div>
+            <button class="submit-btn" onclick="adminLogin()">Login</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="admin-panel" class="hidden">
+        <div class="add-job-form">
+          <h4>Add New Job</h4>
+          <div class="add-job-row">
+            <div class="field">
+              <label>Job Number</label>
+              <input type="text" id="new-job-num" placeholder="AJ-2025-004">
+            </div>
+            <div class="field">
+              <label>Job Name</label>
+              <input type="text" id="new-job-name" placeholder="Project Name">
+            </div>
+            <button class="add-job-btn" onclick="addJob()">+ Add</button>
+          </div>
+        </div>
+
+        <div class="jobs-list" id="admin-jobs-list">
+          <p style="color:#888; text-align:center; padding: 20px;">Loading jobs...</p>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end app-body -->
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <script>
+    // ── Config ─────────────────────────────────────────────
+    const API = window.location.hostname === 'localhost'
+      ? 'http://localhost:3001'
+      : 'https://aj-field-app.onrender.com'; // Update with your Render URL
+
+    let adminToken = null;
+    let jobs = [];
+
+    // ── Init ───────────────────────────────────────────────
+    window.addEventListener('DOMContentLoaded', () => {
+      setTodayDate();
+      loadJobs();
+    });
+
+    function setTodayDate() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('tm-date').value = today;
+      document.getElementById('co-date').value = today;
+    }
+
+    async function loadJobs() {
+      try {
+        const res = await fetch(`${API}/api/jobs`);
+        jobs = await res.json();
+        populateJobDropdowns();
+      } catch (e) {
+        console.warn('Could not load jobs:', e);
+      }
+    }
+
+    function populateJobDropdowns() {
+      ['tm', 'co'].forEach(type => {
+        const sel = document.getElementById(`${type}-job-select`);
+        // Clear existing options except first two (blank + write-in)
+        while (sel.options.length > 2) sel.remove(2);
+        // Insert jobs before write-in
+        jobs.forEach(j => {
+          const opt = new Option(`${j.job_number} — ${j.job_name}`, `${j.job_number} — ${j.job_name}`);
+          sel.insertBefore(opt, sel.options[1]);
+        });
+      });
+    }
+
+    // ── Screen Navigation ──────────────────────────────────
+    const screens = ['home', 'tm', 'co', 'success', 'admin'];
+
+    function showScreen(name) {
+      screens.forEach(s => document.getElementById(`screen-${s}`).classList.add('hidden'));
+      document.getElementById(`screen-${name}`).classList.remove('hidden');
+      window.scrollTo(0, 0);
+    }
+
+    // ── Job Select / Write-in ──────────────────────────────
+    function handleJobSelect(type) {
+      const sel = document.getElementById(`${type}-job-select`);
+      const writein = document.getElementById(`${type}-writein`);
+      if (sel.value === '__writein__') {
+        writein.classList.add('visible');
+      } else {
+        writein.classList.remove('visible');
+      }
+    }
+
+    function getJobValue(type) {
+      const sel = document.getElementById(`${type}-job-select`);
+      if (sel.value === '__writein__') {
+        const wi = document.querySelector(`#screen-${type} [name="job_writein"]`);
+        return wi ? wi.value : '';
+      }
+      return sel.value;
+    }
+
+    // ── Auto-calculate totals ──────────────────────────────
+    function updateTotal(type) {
+      const mat = parseFloat(document.getElementById(`${type}-mat`).value) || 0;
+      const lab = parseFloat(document.getElementById(`${type}-lab`).value) || 0;
+      document.getElementById(`${type}-total`).textContent = `$${(mat + lab).toFixed(2)}`;
+    }
+
+    // ── Form Submission ────────────────────────────────────
+    async function submitForm(e, type) {
+      e.preventDefault();
+      const form = document.getElementById(`form-${type}`);
+      const btn = document.getElementById(`${type}-submit-btn`);
+
+      const job = getJobValue(type);
+      if (!job) { showToast('Please select or enter a job name', 'error'); return; }
+
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      const fd = new FormData(form);
+      const data = Object.fromEntries(fd.entries());
+      data.job = job;
+      delete data.job_select;
+      delete data.job_writein;
+
+      try {
+        const res = await fetch(`${API}/api/submit/${type}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const result = await res.json();
+
+        if (result.success) {
+          form.reset();
+          setTodayDate();
+          document.getElementById(`${type}-writein`).classList.remove('visible');
+          updateTotal(type);
+
+          const msg = type === 'co'
+            ? 'Change Order sent! Kathie will receive a PDF to add the CO# and signatures.'
+            : 'T&M Tag sent to the office successfully.';
+          document.getElementById('success-msg').textContent = msg +
+            (data.submitter_email ? ' A confirmation was sent to your email.' : '');
+          showScreen('success');
+        } else {
+          showToast('Something went wrong. Please try again.', 'error');
+        }
+      } catch (err) {
+        showToast('Network error. Check your connection.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = type === 'tm' ? 'Send T&M Tag to Office' : 'Send Change Order to Office';
+      }
+    }
+
+    // ── Admin ──────────────────────────────────────────────
+    async function adminLogin() {
+      const username = document.getElementById('admin-username').value;
+      const password = document.getElementById('admin-password').value;
+      try {
+        const res = await fetch(`${API}/api/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const result = await res.json();
+        if (result.token) {
+          adminToken = result.token;
+          document.getElementById('admin-login-section').classList.add('hidden');
+          document.getElementById('admin-panel').classList.remove('hidden');
+          loadAdminJobs();
+        } else {
+          showToast('Invalid credentials', 'error');
+        }
+      } catch (e) {
+        showToast('Login failed', 'error');
+      }
+    }
+
+    async function loadAdminJobs() {
+      const res = await fetch(`${API}/api/jobs`);
+      const list = await res.json();
+      const container = document.getElementById('admin-jobs-list');
+      if (!list.length) { container.innerHTML = '<p style="color:#888;text-align:center;padding:20px;">No jobs yet.</p>'; return; }
+      container.innerHTML = list.map(j => `
+        <div class="job-item">
+          <span class="job-num">${j.job_number}</span>
+          <span class="job-name">${j.job_name}</span>
+          <button class="job-delete-btn" onclick="deleteJob(${j.id})" title="Remove">×</button>
+        </div>
+      `).join('');
+    }
+
+    async function addJob() {
+      const num = document.getElementById('new-job-num').value.trim();
+      const name = document.getElementById('new-job-name').value.trim();
+      if (!num || !name) { showToast('Enter both job number and name', 'error'); return; }
+      await fetch(`${API}/api/jobs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+        body: JSON.stringify({ job_number: num, job_name: name })
+      });
+      document.getElementById('new-job-num').value = '';
+      document.getElementById('new-job-name').value = '';
+      await loadAdminJobs();
+      await loadJobs();
+      showToast('Job added!', 'success');
+    }
+
+    async function deleteJob(id) {
+      if (!confirm('Remove this job from the list?')) return;
+      await fetch(`${API}/api/jobs/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      await loadAdminJobs();
+      await loadJobs();
+      showToast('Job removed', 'success');
+    }
+
+    // ── Toast ──────────────────────────────────────────────
+    let toastTimer;
+    function showToast(msg, type = '') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'show ' + type;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { t.className = ''; }, 3200);
+    }
+  </script>
+</body>
+</html>
