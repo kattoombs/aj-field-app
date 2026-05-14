@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const Database = require('better-sqlite3');
-const { PDFDocument, StandardFonts, rgb, PDFTextField } = require('pdf-lib');
+const { PDFDocument, StandardFonts, rgb } = require('pdf-lib');
 const { Resend } = require('resend');
 const path = require('path');
 const fs = require('fs');
@@ -10,11 +10,7 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// ── Middleware ────────────────────────────────────────────────
-app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  credentials: true
-}));
+app.use(cors({ origin: process.env.FRONTEND_URL || '*', credentials: true }));
 app.use(express.json());
 
 // ── Database ──────────────────────────────────────────────────
@@ -32,14 +28,12 @@ db.exec(`
     active INTEGER DEFAULT 1,
     created_at TEXT DEFAULT (datetime('now'))
   );
-
   CREATE TABLE IF NOT EXISTS submissions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     type TEXT NOT NULL,
     submitted_at TEXT DEFAULT (datetime('now')),
     data TEXT NOT NULL
   );
-
   CREATE TABLE IF NOT EXISTS admin_users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
@@ -47,171 +41,213 @@ db.exec(`
   );
 `);
 
-// Seed default jobs if empty
-const jobCount = db.prepare('SELECT COUNT(*) as c FROM jobs').get();
-if (jobCount.c === 0) {
-  const insert = db.prepare('INSERT INTO jobs (job_number, job_name) VALUES (?, ?)');
-  insert.run('AJ-2025-001', 'Dartmouth Renovation');
-  insert.run('AJ-2025-002', 'Fremont Commercial TI');
-  insert.run('AJ-2025-003', 'Antiochian Orthodox Church');
-}
-
 // Seed admin user if empty
 const adminCount = db.prepare('SELECT COUNT(*) as c FROM admin_users').get();
 if (adminCount.c === 0) {
   db.prepare('INSERT INTO admin_users (username, password) VALUES (?, ?)').run('admin', process.env.ADMIN_PASSWORD || 'ajbuilders2025');
 }
 
-// ── Email (Resend) ────────────────────────────────────────────
+// ── Email ─────────────────────────────────────────────────────
 const resend = new Resend(process.env.RESEND_API_KEY);
-const OFFICE_EMAIL = process.env.OFFICE_EMAIL || 'kathie@ajcaliforniabuilders.com';
+const OFFICE_EMAIL = process.env.OFFICE_EMAIL || 'kathie.calbuilders@gmail.com';
 
-// ── PDF Generator ─────────────────────────────────────────────
+// ── PDF Generator — matches A&J official CO format ────────────
 async function generateCoPdf(data) {
   const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage([612, 792]); // Letter
+  const page = pdfDoc.addPage([612, 792]);
   const { width, height } = page.getSize();
 
-  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const boldFont   = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
   const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const italicFont  = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
 
-  // Brand colors
-  const darkBrown = rgb(0.078, 0.016, 0.035);   // #140409
-  const bronze = rgb(0.635, 0.451, 0.224);        // #A27339
-  const lightGrey = rgb(0.851, 0.847, 0.863);     // #D9D8D6
-  const cream = rgb(1, 0.973, 0.941);              // #FFF8F0
+  const dark   = rgb(0.078, 0.016, 0.035);  // #140409
+  const bronze = rgb(0.635, 0.451, 0.224);  // #A27339
+  const white  = rgb(1, 1, 1);
+  const black  = rgb(0, 0, 0);
+  const ltgrey = rgb(0.96, 0.96, 0.96);
 
-  // Header background
-  page.drawRectangle({ x: 0, y: height - 100, width, height: 100, color: darkBrown });
+  const L = 40;   // left margin
+  const R = 572;  // right edge
+  const W = R - L; // content width = 532
 
-  // Company name
-  page.drawText('A&J CALIFORNIA BUILDERS, INC.', {
-    x: 40, y: height - 45,
-    size: 18, font: boldFont, color: cream
-  });
-  page.drawText('CSLB #949668', {
-    x: 40, y: height - 65,
-    size: 10, font: regularFont, color: rgb(0.7, 0.7, 0.7)
-  });
-  page.drawText('CHANGE ORDER', {
-    x: width - 180, y: height - 50,
-    size: 22, font: boldFont, color: bronze
-  });
+  // ── TOP BRONZE BAR ─────────────────────────────────────────
+  page.drawRectangle({ x: 0, y: height - 8, width: 612, height: 8, color: bronze });
 
-  // Bronze divider
-  page.drawRectangle({ x: 0, y: height - 105, width, height: 5, color: bronze });
+  // ── HEADER ─────────────────────────────────────────────────
+  // Logo circle placeholder (left)
+  page.drawEllipse({ x: 80, y: height - 55, xScale: 36, yScale: 36, color: ltgrey });
+  page.drawEllipse({ x: 80, y: height - 55, xScale: 36, yScale: 36, borderColor: bronze, borderWidth: 1 });
+  page.drawText('CALIFORNIA', { x: 57, y: height - 51, size: 7, font: boldFont, color: dark });
+  page.drawText('BUILDERS', { x: 61, y: height - 61, size: 7, font: boldFont, color: dark });
 
-  // Helper: draw a labeled field box
-  const drawField = (label, value, x, y, w, h = 32) => {
-    page.drawRectangle({ x, y, width: w, height: h, color: lightGrey });
-    page.drawRectangle({ x, y, width: w, height: h, borderColor: rgb(0.7, 0.7, 0.7), borderWidth: 0.5 });
-    page.drawText(label, { x: x + 6, y: y + h - 12, size: 7, font: boldFont, color: rgb(0.4, 0.4, 0.4) });
-    if (value) {
-      page.drawText(String(value), { x: x + 6, y: y + 8, size: 11, font: regularFont, color: darkBrown });
-    }
+  // Company info (right-aligned)
+  page.drawText('A & J CALIFORNIA BUILDERS, INC.', { x: 320, y: height - 28, size: 13, font: boldFont, color: dark });
+  page.drawText('1261 Lincoln Avenue, Suite 106  |  San José, CA 95125', { x: 320, y: height - 42, size: 8, font: regularFont, color: dark });
+  page.drawText('Office: 408-690-7421', { x: 320, y: height - 53, size: 8, font: regularFont, color: dark });
+  page.drawText("California State Contractor's License # 949668", { x: 320, y: height - 64, size: 8, font: regularFont, color: dark });
+
+  // ── BRONZE DIVIDER ─────────────────────────────────────────
+  page.drawRectangle({ x: L, y: height - 82, width: W, height: 1.5, color: bronze });
+  page.drawRectangle({ x: L, y: height - 85, width: W, height: 0.5, color: bronze });
+
+  // ── CHANGE ORDER TITLE ─────────────────────────────────────
+  const titleText = 'C H A N G E   O R D E R';
+  const titleW = boldFont.widthOfTextAtSize(titleText, 18);
+  page.drawText(titleText, { x: (612 - titleW) / 2, y: height - 115, size: 18, font: boldFont, color: dark });
+
+  // ── HEADER FIELDS ROW 1: CO# | DATE | CAL PROJ# | GC PROJ# ─
+  const row1Y = height - 145;
+  const row1H = 30;
+
+  // Helper: draw header cell (dark background, label + blank value)
+  const headerCell = (label, value, x, w) => {
+    page.drawRectangle({ x, y: row1Y, width: w, height: row1H, color: dark, borderColor: white, borderWidth: 0.5 });
+    page.drawText(label, { x: x + 4, y: row1Y + row1H - 11, size: 6.5, font: boldFont, color: bronze });
+    if (value) page.drawText(String(value), { x: x + 4, y: row1Y + 6, size: 9, font: regularFont, color: white });
   };
 
-  // CO # and Date row
-  drawField('CHANGE ORDER #', '', 40, height - 165, 200, 40);
-  drawField('DATE', data.date || '', 260, height - 165, 140, 40);
-  drawField('SUBMITTED BY', data.submitted_by || '', 420, height - 165, 152, 40);
+  // Value row below
+  const valueCell = (value, x, w, y, h) => {
+    page.drawRectangle({ x, y, width: w, height: h, color: ltgrey, borderColor: rgb(0.8,0.8,0.8), borderWidth: 0.5 });
+    if (value) page.drawText(String(value), { x: x + 4, y: y + 6, size: 9, font: regularFont, color: dark });
+  };
 
-  // Job info
-  drawField('JOB NAME / NUMBER', data.job || '', 40, height - 220, 260, 40);
-  drawField('GENERAL CONTRACTOR', data.gc_name || '', 320, height - 220, 252, 40);
+  headerCell('CHANGE ORDER NO.', '', L, 133);
+  headerCell('DATE', data.date || '', L + 133, 100);
+  headerCell('CAL BUILDERS PROJ #', data.job || '', L + 233, 133);
+  headerCell('GEN. CONTRACTOR PROJ #', '', L + 366, 166);
 
-  // Address
-  drawField('JOB ADDRESS', data.address || '', 40, height - 275, 532, 40);
+  // ── HEADER FIELDS ROW 2: PROJECT | LOCATION | GEN. CONTRACTOR ─
+  const row2LabelY = height - 168;
+  const row2ValY   = height - 190;
+  const row2H = 22;
 
-  // Section header
-  page.drawRectangle({ x: 40, y: height - 305, width: 532, height: 22, color: darkBrown });
-  page.drawText('DESCRIPTION OF EXTRA WORK', {
-    x: 46, y: height - 298, size: 10, font: boldFont, color: cream
+  headerCell('PROJECT', '', L, 200);
+  headerCell('LOCATION', data.address || '', L + 200, 133);
+  headerCell('GEN. CONTRACTOR', data.gc_name || '', L + 333, 199);
+
+  // ── DESCRIPTION LABEL ──────────────────────────────────────
+  page.drawText('Description of extra work for this project:', {
+    x: L, y: height - 210, size: 9, font: italicFont, color: dark
   });
 
-  // Description box
-  page.drawRectangle({ x: 40, y: height - 420, width: 532, height: 115, color: lightGrey });
-  page.drawRectangle({ x: 40, y: height - 420, width: 532, height: 115, borderColor: rgb(0.7, 0.7, 0.7), borderWidth: 0.5 });
+  // ── DESCRIPTION BOX ────────────────────────────────────────
+  const descBoxY = height - 390;
+  const descBoxH = 175;
+  page.drawRectangle({ x: L, y: descBoxY, width: W, height: descBoxH, color: rgb(0.95, 0.97, 0.99), borderColor: bronze, borderWidth: 1 });
+
+  // Word-wrap description text
   if (data.description) {
     const words = data.description.split(' ');
-    let line = '', lineY = height - 320, lineH = 14;
+    let line = '', lineY = descBoxY + descBoxH - 18, lineH = 14;
     for (const word of words) {
       const test = line ? line + ' ' + word : word;
-      if (regularFont.widthOfTextAtSize(test, 10) > 510) {
-        page.drawText(line, { x: 48, y: lineY, size: 10, font: regularFont, color: darkBrown });
-        line = word; lineY -= lineH;
-        if (lineY < height - 415) break;
+      if (regularFont.widthOfTextAtSize(test, 10) > W - 16) {
+        if (lineY > descBoxY + 8) {
+          page.drawText(line, { x: L + 8, y: lineY, size: 10, font: regularFont, color: dark });
+          lineY -= lineH;
+        }
+        line = word;
       } else { line = test; }
     }
-    if (line) page.drawText(line, { x: 48, y: lineY, size: 10, font: regularFont, color: darkBrown });
-  }
-
-  // Materials section header
-  page.drawRectangle({ x: 40, y: height - 450, width: 532, height: 22, color: darkBrown });
-  page.drawText('MATERIALS', {
-    x: 46, y: height - 443, size: 10, font: boldFont, color: cream
-  });
-
-  // Materials box
-  page.drawRectangle({ x: 40, y: height - 540, width: 532, height: 90, color: lightGrey });
-  page.drawRectangle({ x: 40, y: height - 540, width: 532, height: 90, borderColor: rgb(0.7, 0.7, 0.7), borderWidth: 0.5 });
-  if (data.materials) {
-    const words = data.materials.split(' ');
-    let line = '', lineY = height - 462, lineH = 14;
-    for (const word of words) {
-      const test = line ? line + ' ' + word : word;
-      if (regularFont.widthOfTextAtSize(test, 10) > 510) {
-        page.drawText(line, { x: 48, y: lineY, size: 10, font: regularFont, color: darkBrown });
-        line = word; lineY -= lineH;
-        if (lineY < height - 535) break;
-      } else { line = test; }
+    if (line && lineY > descBoxY + 8) {
+      page.drawText(line, { x: L + 8, y: lineY, size: 10, font: regularFont, color: dark });
     }
-    if (line) page.drawText(line, { x: 48, y: lineY, size: 10, font: regularFont, color: darkBrown });
   }
 
-  // Cost section header
-  page.drawRectangle({ x: 40, y: height - 570, width: 532, height: 22, color: darkBrown });
-  page.drawText('COST SUMMARY', {
-    x: 46, y: height - 563, size: 10, font: boldFont, color: cream
-  });
-
-  // Cost fields
+  // ── COST TABLE ─────────────────────────────────────────────
   const matCost = parseFloat(data.material_cost) || 0;
   const labCost = parseFloat(data.labor_cost) || 0;
-  const total = matCost + labCost;
+  const total   = matCost + labCost;
 
-  drawField('MATERIAL COST', data.material_cost ? `$${matCost.toFixed(2)}` : '', 40, height - 620, 170, 40);
-  drawField('LABOR COST', data.labor_cost ? `$${labCost.toFixed(2)}` : '', 220, height - 620, 170, 40);
+  const tableX  = 200;
+  const tableW  = R - tableX;
+  const tableRows = [
+    { label: 'Labor:',                value: `$${labCost.toFixed(2)}`,  dark: false },
+    { label: 'Material:',             value: `$${matCost.toFixed(2)}`,  dark: false },
+    { label: 'P/O:',                  value: '$',                        dark: false },
+    { label: 'Total Change Order:',   value: `$${total.toFixed(2)}`,    dark: true  },
+    { label: 'Original Contract Amount:', value: '$',                    dark: false },
+    { label: 'Previous Change Orders:',   value: '$',                    dark: false },
+    { label: 'This Change Order:',    value: `$${total.toFixed(2)}`,    dark: false },
+    { label: 'New Contract Amount:',  value: '$',                        dark: true  },
+  ];
 
-  // Total box — highlighted
-  page.drawRectangle({ x: 400, y: height - 620, width: 172, height: 40, color: bronze });
-  page.drawText('TOTAL CHANGE ORDER AMOUNT', { x: 406, y: height - 592, size: 7, font: boldFont, color: cream });
-  page.drawText(data.material_cost || data.labor_cost ? `$${total.toFixed(2)}` : '', {
-    x: 406, y: height - 610, size: 14, font: boldFont, color: cream
+  const rowH   = 22;
+  const valColW = 130;
+  let rowY = descBoxY - 10 - (tableRows.length * rowH);
+
+  tableRows.forEach(row => {
+    const bg = row.dark ? dark : white;
+    const fg = row.dark ? white : dark;
+    const labelFont = row.dark ? boldFont : regularFont;
+
+    // Label cell
+    page.drawRectangle({ x: tableX, y: rowY, width: tableW - valColW, height: rowH, color: bg, borderColor: rgb(0.7,0.7,0.7), borderWidth: 0.5 });
+    page.drawText(row.label, { x: tableX + 6, y: rowY + 7, size: 9, font: labelFont, color: fg });
+
+    // Value cell
+    page.drawRectangle({ x: tableX + tableW - valColW, y: rowY, width: valColW, height: rowH, color: bg, borderColor: rgb(0.7,0.7,0.7), borderWidth: 0.5 });
+    // Show $ placeholder or actual value
+    const displayVal = (row.value === '$' || (!data.material_cost && !data.labor_cost && row.value.startsWith('$0'))) ? '$' : row.value;
+    page.drawText(displayVal, { x: tableX + tableW - valColW + 8, y: rowY + 7, size: 9, font: labelFont, color: fg });
+
+    rowY += rowH;
   });
 
-  // Signature section
-  page.drawRectangle({ x: 40, y: height - 700, width: 532, height: 22, color: darkBrown });
-  page.drawText('AUTHORIZATION', {
-    x: 46, y: height - 693, size: 10, font: boldFont, color: cream
+  // ── LEGAL TEXT ─────────────────────────────────────────────
+  const legalY = rowY - (tableRows.length * rowH) - 20;
+  // recalculate: rowY is now at top of table after loop
+  const tableTopY = rowY; // rowY ended up at top
+  const legalTextY = descBoxY - (tableRows.length * rowH) - 30;
+
+  page.drawText('In accordance with the subcontract agreement on the above-mentioned project, please add/deduct work requested.', {
+    x: L, y: legalTextY, size: 7.5, font: italicFont, color: dark
   });
+
+  // ── SIGNATURE BLOCKS ───────────────────────────────────────
+  const sigY = legalTextY - 20;
+  const sigW = (W / 2) - 6;
+
+  // Left: A&J
+  page.drawRectangle({ x: L, y: sigY, width: sigW, height: 16, color: dark });
+  page.drawText('A & J CALIFORNIA BUILDERS, INC. — AUTHORIZED SIGNATURE', { x: L + 4, y: sigY + 4, size: 6.5, font: boldFont, color: bronze });
+
+  // Right: GC
+  page.drawRectangle({ x: L + sigW + 12, y: sigY, width: sigW, height: 16, color: dark });
+  page.drawText('ACCEPTED BY — GENERAL CONTRACTOR / OWNER', { x: L + sigW + 16, y: sigY + 4, size: 6.5, font: boldFont, color: bronze });
 
   // Sig lines
-  const drawSigLine = (label, x, y, w) => {
-    page.drawLine({ start: { x, y }, end: { x: x + w, y }, thickness: 0.5, color: rgb(0.5, 0.5, 0.5) });
-    page.drawText(label, { x, y: y - 12, size: 8, font: regularFont, color: rgb(0.5, 0.5, 0.5) });
-  };
+  const drawLine = (x1, y1, x2) => page.drawLine({ start: { x: x1, y: y1 }, end: { x: x2, y: y1 }, thickness: 0.5, color: rgb(0.5,0.5,0.5) });
+  const drawLabel = (text, x, y) => page.drawText(text, { x, y, size: 7, font: regularFont, color: rgb(0.5,0.5,0.5) });
 
-  drawSigLine('A&J Representative Signature', 40, height - 730, 240);
-  drawSigLine('Date', 300, height - 730, 80);
-  drawSigLine('GC / Owner Approval Signature', 40, height - 760, 240);
-  drawSigLine('Date', 300, height - 760, 80);
+  // Left sig block
+  drawLine(L, sigY - 18, L + sigW);
+  drawLabel('Signature', L, sigY - 28);
+  drawLine(L, sigY - 44, L + sigW);
+  drawLabel('Printed Name', L, sigY - 54);
+  drawLine(L, sigY - 68, L + (sigW * 0.6));
+  drawLine(L + (sigW * 0.65), sigY - 68, L + sigW);
+  drawLabel('Title', L, sigY - 78);
+  drawLabel('Date', L + (sigW * 0.65), sigY - 78);
 
-  // Footer
-  page.drawRectangle({ x: 0, y: 0, width, height: 28, color: darkBrown });
-  page.drawText('A&J California Builders, Inc.  |  CSLB #949668  |  San José, CA', {
-    x: 40, y: 10, size: 8, font: regularFont, color: rgb(0.6, 0.6, 0.6)
-  });
+  // Right sig block
+  const rx = L + sigW + 12;
+  drawLine(rx, sigY - 18, rx + sigW);
+  drawLabel('Signature', rx, sigY - 28);
+  drawLine(rx, sigY - 44, rx + sigW);
+  drawLabel('Printed Name', rx, sigY - 54);
+  drawLine(rx, sigY - 68, rx + (sigW * 0.6));
+  drawLine(rx + (sigW * 0.65), sigY - 68, rx + sigW);
+  drawLabel('Title', rx, sigY - 78);
+  drawLabel('Date', rx + (sigW * 0.65), sigY - 78);
+
+  // ── BOTTOM FOOTER ──────────────────────────────────────────
+  page.drawRectangle({ x: 0, y: 0, width: 612, height: 22, color: bronze });
+  const footerText = "A & J California Builders, Inc.  |  License # 949668  |  1261 Lincoln Ave, Suite 106, San José, CA 95125  |  408-690-7421";
+  const footerW = regularFont.widthOfTextAtSize(footerText, 7);
+  page.drawText(footerText, { x: (612 - footerW) / 2, y: 7, size: 7, font: regularFont, color: white });
 
   const pdfBytes = await pdfDoc.save();
   return Buffer.from(pdfBytes);
@@ -232,16 +268,13 @@ app.post('/api/jobs', requireAdmin, (req, res) => {
   try {
     const result = db.prepare('INSERT INTO jobs (job_number, job_name) VALUES (?, ?)').run(job_number, job_name);
     res.json({ id: result.lastInsertRowid, job_number, job_name });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // PUT update job (admin)
 app.put('/api/jobs/:id', requireAdmin, (req, res) => {
   const { job_number, job_name, active } = req.body;
-  db.prepare('UPDATE jobs SET job_number = ?, job_name = ?, active = ? WHERE id = ?')
-    .run(job_number, job_name, active ?? 1, req.params.id);
+  db.prepare('UPDATE jobs SET job_number = ?, job_name = ?, active = ? WHERE id = ?').run(job_number, job_name, active ?? 1, req.params.id);
   res.json({ success: true });
 });
 
@@ -251,219 +284,142 @@ app.delete('/api/jobs/:id', requireAdmin, (req, res) => {
   res.json({ success: true });
 });
 
-// POST T&M submission
+// ── Email helpers ─────────────────────────────────────────────
+function emailHeader(title) {
+  return `<div style="font-family: Georgia, serif; max-width: 620px; margin: 0 auto;">
+    <div style="background: #140409; padding: 22px 32px 18px;">
+      <p style="color: #A27339; margin: 0; font-size: 11px; letter-spacing: 2px; text-transform: uppercase;">A&amp;J California Builders, Inc.</p>
+      <h1 style="color: #FFF8F0; margin: 6px 0 0; font-size: 20px; font-family: Georgia, serif;">${title}</h1>
+    </div>
+    <div style="background: #A27339; height: 3px;"></div>
+    <div style="background: #FFF8F0; padding: 28px 32px;">`;
+}
+
+function emailRow(label, value) {
+  return `<tr>
+    <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6; width: 42%; font-size: 13px; font-weight: 600; color: #555;">${label}</td>
+    <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6; font-size: 13px; color: #140409;">${value || '—'}</td>
+  </tr>`;
+}
+
+function emailCostBox(mat, lab, total, label) {
+  return `<div style="background: #140409; border-radius: 6px; padding: 18px 20px; margin-top: 20px;">
+    <table style="width: 100%; color: #FFF8F0; font-size: 13px;">
+      <tr><td>Material Cost</td><td style="text-align:right;">$${mat}</td></tr>
+      <tr><td>Labor Cost</td><td style="text-align:right;">$${lab}</td></tr>
+      <tr style="border-top: 1px solid #A27339;">
+        <td style="padding-top: 10px; font-size: 15px; font-weight: bold; color: #A27339;">${label}</td>
+        <td style="text-align:right; padding-top: 10px; font-size: 18px; font-weight: bold; color: #A27339;">$${total}</td>
+      </tr>
+    </table>
+  </div>`;
+}
+
+function emailFooter(note) {
+  return `${note ? `<p style="font-size: 12px; color: #888; margin-top: 20px; border-left: 3px solid #A27339; padding-left: 10px;">${note}</p>` : ''}
+    <p style="font-size: 10px; color: #bbb; margin-top: 24px;">Submitted ${new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })} PT</p>
+    </div></div>`;
+}
+
+// ── POST T&M submission ───────────────────────────────────────
 app.post('/api/submit/tm', async (req, res) => {
   const d = req.body;
-  const matCost = parseFloat(d.material_cost) || 0;
-  const labCost = parseFloat(d.labor_cost) || 0;
-  const total = matCost + labCost;
+  const mat   = parseFloat(d.material_cost) || 0;
+  const lab   = parseFloat(d.labor_cost)    || 0;
+  const total = mat + lab;
 
-  // Save to DB
   db.prepare('INSERT INTO submissions (type, data) VALUES (?, ?)').run('tm', JSON.stringify(d));
 
-  const emailHtml = `
-    <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto;">
-      <div style="background: #140409; padding: 24px 32px;">
-        <h1 style="color: #FFF8F0; margin: 0; font-size: 20px;">A&J California Builders</h1>
-        <p style="color: #A27339; margin: 4px 0 0; font-size: 13px; letter-spacing: 2px;">TIME & MATERIAL TAG</p>
-      </div>
-      <div style="background: #A27339; height: 4px;"></div>
-      <div style="background: #FFF8F0; padding: 32px;">
-        <table style="width: 100%; border-collapse: collapse;">
-          <tr>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6; width: 40%;"><strong>Date</strong></td>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;">${d.date || '—'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;"><strong>Job</strong></td>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;">${d.job || '—'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;"><strong>General Contractor</strong></td>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;">${d.gc_name || '—'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;"><strong>Job Address</strong></td>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;">${d.address || '—'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;"><strong>Foreman</strong></td>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;">${d.foreman || '—'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;"><strong>Crew Count</strong></td>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;">${d.crew_count || '—'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;"><strong>Hours</strong></td>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;">${d.hours || '—'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;"><strong>Work Description</strong></td>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;">${d.description || '—'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;"><strong>Materials</strong></td>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;">${d.materials || '—'}</td>
-          </tr>
-        </table>
-        <div style="background: #140409; border-radius: 6px; padding: 20px; margin-top: 24px;">
-          <table style="width: 100%; color: #FFF8F0;">
-            <tr>
-              <td style="padding: 4px 0;">Material Cost</td>
-              <td style="text-align: right;">$${matCost.toFixed(2)}</td>
-            </tr>
-            <tr>
-              <td style="padding: 4px 0;">Labor Cost</td>
-              <td style="text-align: right;">$${labCost.toFixed(2)}</td>
-            </tr>
-            <tr style="border-top: 1px solid #A27339;">
-              <td style="padding: 8px 0 0; font-size: 16px; font-weight: bold; color: #A27339;">TOTAL</td>
-              <td style="text-align: right; font-size: 18px; font-weight: bold; color: #A27339; padding-top: 8px;">$${total.toFixed(2)}</td>
-            </tr>
-          </table>
-        </div>
-        <p style="font-size: 11px; color: #999; margin-top: 24px;">Submitted ${new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })} PT</p>
-      </div>
-    </div>
-  `;
+  const html = emailHeader('Time &amp; Material Tag')
+    + `<table style="width:100%; border-collapse:collapse;">`
+    + emailRow('Date', d.date)
+    + emailRow('Job', d.job)
+    + emailRow('General Contractor', d.gc_name)
+    + emailRow('Job Address', d.address)
+    + emailRow('Foreman', d.foreman)
+    + emailRow('Crew Count', d.crew_count)
+    + emailRow('Hours', d.hours)
+    + emailRow('Work Description', d.description)
+    + emailRow('Materials', d.materials)
+    + `</table>`
+    + emailCostBox(mat.toFixed(2), lab.toFixed(2), total.toFixed(2), 'TOTAL T&amp;M AMOUNT')
+    + emailFooter();
 
   try {
     await resend.emails.send({
       from: 'AJ Field App <onboarding@resend.dev>',
       to: OFFICE_EMAIL,
       subject: `T&M Tag — ${d.job || 'Unassigned'} — ${d.date || new Date().toLocaleDateString()}`,
-      html: emailHtml
+      html
     });
-
-    // Confirmation to submitter if email provided
     if (d.submitter_email) {
       await resend.emails.send({
         from: 'AJ Field App <onboarding@resend.dev>',
         to: d.submitter_email,
         subject: `✓ T&M Tag Received — ${d.job || 'Unassigned'}`,
-        html: `<p style="font-family: sans-serif;">Your T&M tag for <strong>${d.job || 'Unassigned'}</strong> on ${d.date} was received by the office. Total: <strong>$${total.toFixed(2)}</strong></p>`
+        html: `<p style="font-family:sans-serif;">Your T&M tag for <strong>${d.job || 'Unassigned'}</strong> on ${d.date} was received. Total: <strong>$${total.toFixed(2)}</strong></p>`
       });
     }
-
     res.json({ success: true });
   } catch (e) {
     console.error('Email error:', e);
-    // Still save, just warn about email
-    res.json({ success: true, emailWarning: 'Saved but email may not have sent. Contact office.' });
+    res.json({ success: true, emailWarning: 'Saved but email may not have sent.' });
   }
 });
 
-// POST Change Order submission
+// ── POST Change Order submission ──────────────────────────────
 app.post('/api/submit/co', async (req, res) => {
   const d = req.body;
-  const matCost = parseFloat(d.material_cost) || 0;
-  const labCost = parseFloat(d.labor_cost) || 0;
-  const total = matCost + labCost;
+  const mat   = parseFloat(d.material_cost) || 0;
+  const lab   = parseFloat(d.labor_cost)    || 0;
+  const total = mat + lab;
 
-  // Save to DB
   db.prepare('INSERT INTO submissions (type, data) VALUES (?, ?)').run('co', JSON.stringify(d));
 
-  // Generate PDF
   let pdfBuffer;
-  try {
-    pdfBuffer = await generateCoPdf(d);
-  } catch (e) {
-    console.error('PDF generation error:', e);
-  }
+  try { pdfBuffer = await generateCoPdf(d); } catch (e) { console.error('PDF error:', e); }
 
-  const emailHtml = `
-    <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto;">
-      <div style="background: #140409; padding: 24px 32px;">
-        <h1 style="color: #FFF8F0; margin: 0; font-size: 20px;">A&J California Builders</h1>
-        <p style="color: #A27339; margin: 4px 0 0; font-size: 13px; letter-spacing: 2px;">CHANGE ORDER — FIELD SUBMISSION</p>
-      </div>
-      <div style="background: #A27339; height: 4px;"></div>
-      <div style="background: #FFF8F0; padding: 32px;">
-        <p style="color: #555; font-size: 13px; border-left: 3px solid #A27339; padding-left: 12px; margin-top: 0;">
-          PDF attached. Open to add CO# and obtain signatures.
-        </p>
-        <table style="width: 100%; border-collapse: collapse;">
-          <tr>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6; width: 40%;"><strong>Date</strong></td>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;">${d.date || '—'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;"><strong>Job</strong></td>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;">${d.job || '—'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;"><strong>General Contractor</strong></td>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;">${d.gc_name || '—'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;"><strong>Job Address</strong></td>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;">${d.address || '—'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;"><strong>Submitted By</strong></td>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;">${d.submitted_by || '—'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;"><strong>Extra Work Description</strong></td>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;">${d.description || '—'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;"><strong>Materials</strong></td>
-            <td style="padding: 8px 0; border-bottom: 1px solid #D9D8D6;">${d.materials || '—'}</td>
-          </tr>
-        </table>
-        <div style="background: #140409; border-radius: 6px; padding: 20px; margin-top: 24px;">
-          <table style="width: 100%; color: #FFF8F0;">
-            <tr>
-              <td style="padding: 4px 0;">Material Cost</td>
-              <td style="text-align: right;">$${matCost.toFixed(2)}</td>
-            </tr>
-            <tr>
-              <td style="padding: 4px 0;">Labor Cost</td>
-              <td style="text-align: right;">$${labCost.toFixed(2)}</td>
-            </tr>
-            <tr style="border-top: 1px solid #A27339;">
-              <td style="padding: 8px 0 0; font-size: 16px; font-weight: bold; color: #A27339;">TOTAL CO AMOUNT</td>
-              <td style="text-align: right; font-size: 18px; font-weight: bold; color: #A27339; padding-top: 8px;">$${total.toFixed(2)}</td>
-            </tr>
-          </table>
-        </div>
-        <p style="font-size: 11px; color: #999; margin-top: 24px;">Submitted ${new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })} PT</p>
-      </div>
-    </div>
-  `;
+  const html = emailHeader('Change Order — Field Submission')
+    + `<p style="font-size:12px; color:#666; border-left:3px solid #A27339; padding-left:10px; margin-bottom:20px;">PDF attached — open to add CO#, GC Project#, contract amounts, and obtain signatures.</p>`
+    + `<table style="width:100%; border-collapse:collapse;">`
+    + emailRow('Date', d.date)
+    + emailRow('Submitted By', d.submitted_by)
+    + emailRow('Job', d.job)
+    + emailRow('General Contractor', d.gc_name)
+    + emailRow('Job Address', d.address)
+    + emailRow('Description of Extra Work', d.description)
+    + emailRow('Materials', d.materials)
+    + `</table>`
+    + emailCostBox(mat.toFixed(2), lab.toFixed(2), total.toFixed(2), 'TOTAL CHANGE ORDER AMOUNT')
+    + emailFooter();
 
   try {
-    const emailPayload = {
+    const payload = {
       from: 'AJ Field App <onboarding@resend.dev>',
       to: OFFICE_EMAIL,
       subject: `Change Order — ${d.job || 'Unassigned'} — ${d.date || new Date().toLocaleDateString()}`,
-      html: emailHtml
+      html
     };
-
     if (pdfBuffer) {
-      emailPayload.attachments = [{
+      payload.attachments = [{
         filename: `CO_${(d.job || 'Unassigned').replace(/[^a-z0-9]/gi, '_')}_${d.date || 'draft'}.pdf`,
         content: pdfBuffer.toString('base64')
       }];
     }
-
-    await resend.emails.send(emailPayload);
+    await resend.emails.send(payload);
 
     if (d.submitter_email) {
       await resend.emails.send({
         from: 'AJ Field App <onboarding@resend.dev>',
         to: d.submitter_email,
         subject: `✓ Change Order Received — ${d.job || 'Unassigned'}`,
-        html: `<p style="font-family: sans-serif;">Your change order for <strong>${d.job || 'Unassigned'}</strong> on ${d.date} was received by the office. Total Amount: <strong>$${total.toFixed(2)}</strong></p>`
+        html: `<p style="font-family:sans-serif;">Your change order for <strong>${d.job || 'Unassigned'}</strong> on ${d.date} was received. Total: <strong>$${total.toFixed(2)}</strong></p>`
       });
     }
-
     res.json({ success: true });
   } catch (e) {
     console.error('Email error:', e);
-    res.json({ success: true, emailWarning: 'Saved but email may not have sent. Contact office.' });
+    res.json({ success: true, emailWarning: 'Saved but email may not have sent.' });
   }
 });
 
@@ -488,13 +444,11 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-// GET submissions (admin)
 app.get('/api/submissions', requireAdmin, (req, res) => {
   const subs = db.prepare('SELECT * FROM submissions ORDER BY submitted_at DESC LIMIT 100').all();
   res.json(subs.map(s => ({ ...s, data: JSON.parse(s.data) })));
 });
 
-// Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
 app.listen(PORT, () => console.log(`A&J Field App server running on port ${PORT}`));
