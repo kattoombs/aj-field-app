@@ -119,8 +119,16 @@ async function generateCoPdf(data) {
     page.drawRectangle({ x, y, width: w, height: h - lbH, color: goldTint });
   };
 
-  const drawCellVal = (value, x, y, h) => {
-    if (value) page.drawText(String(value), { x: x + 4, y: y + 6, size: 9, font: reg, color: charcoal });
+  const drawCellVal = (value, x, y, h, maxW) => {
+    if (!value) return;
+    let txt = String(value);
+    if (maxW) {
+      while (txt.length > 1 && reg.widthOfTextAtSize(txt, 9) > maxW - 8) {
+        txt = txt.slice(0, -1);
+      }
+      if (txt.length < String(value).length) txt = txt.slice(0, -1) + '...';
+    }
+    page.drawText(txt, { x: x + 4, y: y + 6, size: 9, font: reg, color: charcoal });
   };
 
   // Row 1
@@ -130,7 +138,7 @@ async function generateCoPdf(data) {
   for (let i = 0; i < 4; i++) {
     const cx = mL + i * colW;
     drawCell(cx, r1y, colW, rowH, r1L[i]);
-    drawCellVal(r1V[i], cx, r1y, rowH);
+    drawCellVal(r1V[i], cx, r1y, rowH, colW);
   }
 
   // Row 2
@@ -138,9 +146,9 @@ async function generateCoPdf(data) {
   drawCell(mL,             r2y, colW * 2, rowH, 'PROJECT');
   drawCell(mL + colW * 2,  r2y, colW,     rowH, 'LOCATION');
   drawCell(mL + colW * 3,  r2y, colW,     rowH, 'GEN. CONTRACTOR');
-  drawCellVal(data.job || '',     mL,            r2y, rowH);
-  drawCellVal(data.address || '', mL + colW * 2, r2y, rowH);
-  drawCellVal(data.gc_name || '', mL + colW * 3, r2y, rowH);
+  drawCellVal(data.job || '',     mL,            r2y, rowH, colW * 2);
+  drawCellVal(data.address || '', mL + colW * 2, r2y, rowH, colW);
+  drawCellVal(data.gc_name || '', mL + colW * 3, r2y, rowH, colW);
 
   // DESCRIPTION
   const descLabelY = r2y - 0.32 * inch;
