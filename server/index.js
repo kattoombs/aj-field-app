@@ -131,10 +131,10 @@ async function generateCoPdf(data) {
     page.drawText(txt, { x: x + 4, y: y + 6, size: 9, font: reg, color: charcoal });
   };
 
-  // Extract just the 4-digit job number from "2601 — 26471 Weston..."
-  const jobNum  = (data.job || '').split('—')[0].trim();
-  // Extract project name (everything after the —)
-  const jobName = (data.job || '').includes('—') ? (data.job || '').split('—').slice(1).join('—').trim() : (data.job || '');
+  // Extract just the 4-digit job number — handles em dash, en dash, or regular dash
+  const jobParts = (data.job || '').split(/\s*[—–-]\s*/);
+  const jobNum   = jobParts[0].trim();
+  const jobName  = jobParts.slice(1).join(' ').trim() || (data.job || '');
 
   // Row 1
   const r1y = gridTop - rowH;
