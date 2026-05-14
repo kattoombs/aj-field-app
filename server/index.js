@@ -51,207 +51,200 @@ if (adminCount.c === 0) {
 const resend = new Resend(process.env.RESEND_API_KEY);
 const OFFICE_EMAIL = process.env.OFFICE_EMAIL || 'kathie.calbuilders@gmail.com';
 
-// ── PDF Generator — matches A&J official CO format ────────────
+// written
+
 async function generateCoPdf(data) {
   const pdfDoc = await PDFDocument.create();
-  const page = pdfDoc.addPage([612, 792]);
-  const { width, height } = page.getSize();
+  const page   = pdfDoc.addPage([612, 792]);
+  const W612   = 612, H = 792;
 
-  const boldFont   = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-  const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const italicFont  = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
+  const bold    = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const reg     = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const italic  = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
+  const boldIta = await pdfDoc.embedFont(StandardFonts.HelveticaBoldOblique);
 
-  const dark   = rgb(0.078, 0.016, 0.035);  // #140409
-  const bronze = rgb(0.635, 0.451, 0.224);  // #A27339
-  const white  = rgb(1, 1, 1);
-  const black  = rgb(0, 0, 0);
-  const ltgrey = rgb(0.96, 0.96, 0.96);
+  const gold      = rgb(0.722, 0.533, 0.165);
+  const goldLight = rgb(0.831, 0.659, 0.290);
+  const charcoal  = rgb(0.110, 0.110, 0.110);
+  const midGray   = rgb(0.333, 0.333, 0.333);
+  const goldTint  = rgb(0.980, 0.965, 0.933);
+  const borderC   = rgb(0.173, 0.173, 0.173);
+  const white     = rgb(1, 1, 1);
 
-  const L = 40;   // left margin
-  const R = 572;  // right edge
-  const W = R - L; // content width = 532
+  const inch = 72;
+  const mL   = 0.65 * inch;
+  const mR   = W612 - 0.65 * inch;
+  const fW   = mR - mL;
 
-  // ── TOP BRONZE BAR ─────────────────────────────────────────
-  page.drawRectangle({ x: 0, y: height - 8, width: 612, height: 8, color: bronze });
-
-  // ── HEADER ─────────────────────────────────────────────────
-  // Logo circle placeholder (left)
-  page.drawEllipse({ x: 80, y: height - 55, xScale: 36, yScale: 36, color: ltgrey });
-  page.drawEllipse({ x: 80, y: height - 55, xScale: 36, yScale: 36, borderColor: bronze, borderWidth: 1 });
-  page.drawText('CALIFORNIA', { x: 57, y: height - 51, size: 7, font: boldFont, color: dark });
-  page.drawText('BUILDERS', { x: 61, y: height - 61, size: 7, font: boldFont, color: dark });
-
-  // Company info (right-aligned)
-  page.drawText('A & J CALIFORNIA BUILDERS, INC.', { x: 320, y: height - 28, size: 13, font: boldFont, color: dark });
-  page.drawText('1261 Lincoln Avenue, Suite 106  |  San José, CA 95125', { x: 320, y: height - 42, size: 8, font: regularFont, color: dark });
-  page.drawText('Office: 408-690-7421', { x: 320, y: height - 53, size: 8, font: regularFont, color: dark });
-  page.drawText("California State Contractor's License # 949668", { x: 320, y: height - 64, size: 8, font: regularFont, color: dark });
-
-  // ── BRONZE DIVIDER ─────────────────────────────────────────
-  page.drawRectangle({ x: L, y: height - 82, width: W, height: 1.5, color: bronze });
-  page.drawRectangle({ x: L, y: height - 85, width: W, height: 0.5, color: bronze });
-
-  // ── CHANGE ORDER TITLE ─────────────────────────────────────
-  const titleText = 'C H A N G E   O R D E R';
-  const titleW = boldFont.widthOfTextAtSize(titleText, 18);
-  page.drawText(titleText, { x: (612 - titleW) / 2, y: height - 115, size: 18, font: boldFont, color: dark });
-
-  // ── HEADER FIELDS ROW 1: CO# | DATE | CAL PROJ# | GC PROJ# ─
-  const row1Y = height - 145;
-  const row1H = 30;
-
-  // Helper: draw header cell (dark background, label + blank value)
-  const headerCell = (label, value, x, w) => {
-    page.drawRectangle({ x, y: row1Y, width: w, height: row1H, color: dark, borderColor: white, borderWidth: 0.5 });
-    page.drawText(label, { x: x + 4, y: row1Y + row1H - 11, size: 6.5, font: boldFont, color: bronze });
-    if (value) page.drawText(String(value), { x: x + 4, y: row1Y + 6, size: 9, font: regularFont, color: white });
+  const drawRight = (text, rightX, y, size, font, color) => {
+    const tw = font.widthOfTextAtSize(text, size);
+    page.drawText(text, { x: rightX - tw, y, size, font, color });
   };
 
-  // Value row below
-  const valueCell = (value, x, w, y, h) => {
-    page.drawRectangle({ x, y, width: w, height: h, color: ltgrey, borderColor: rgb(0.8,0.8,0.8), borderWidth: 0.5 });
-    if (value) page.drawText(String(value), { x: x + 4, y: y + 6, size: 9, font: regularFont, color: dark });
+  // TOP GOLD BAR
+  page.drawRectangle({ x: 0, y: H - 0.18 * inch, width: W612, height: 0.18 * inch, color: gold });
+
+  // HEADER
+  const headerTop    = H - 0.35 * inch;
+  const headerBottom = H - 1.45 * inch;
+  const headerH      = headerTop - headerBottom;
+  const logoSize     = 0.95 * inch;
+  const logoX        = mL;
+  const logoY        = headerBottom + (headerH - logoSize) / 2;
+
+  page.drawRectangle({ x: logoX, y: logoY, width: logoSize, height: logoSize, color: goldTint, borderColor: gold, borderWidth: 1 });
+  page.drawText('CALIFORNIA', { x: logoX + 8,  y: logoY + logoSize / 2 + 4, size: 7, font: bold, color: charcoal });
+  page.drawText('BUILDERS',   { x: logoX + 12, y: logoY + logoSize / 2 - 6, size: 7, font: bold, color: charcoal });
+
+  const infoY = headerTop - 0.15 * inch;
+  drawRight('A & J CALIFORNIA BUILDERS, INC.', mR, infoY, 12, bold, charcoal);
+  drawRight('1261 Lincoln Avenue, Suite 106  |  San Jose, CA 95125', mR, infoY - 0.18 * inch, 8.5, reg, midGray);
+  drawRight('Office: 408-690-7421', mR, infoY - 0.33 * inch, 8.5, reg, midGray);
+  drawRight("California State Contractor's License # 949668", mR, infoY - 0.48 * inch, 8.5, reg, midGray);
+
+  // GOLD DIVIDER
+  const divY = headerBottom - 0.05 * inch;
+  page.drawLine({ start: { x: mL, y: divY }, end: { x: mR, y: divY }, thickness: 2.5, color: gold });
+
+  // TITLE
+  const titleY   = divY - 0.38 * inch;
+  const titleTxt = 'C H A N G E   O R D E R';
+  const titleW2  = bold.widthOfTextAtSize(titleTxt, 17);
+  page.drawText(titleTxt, { x: (W612 - titleW2) / 2, y: titleY, size: 17, font: bold, color: charcoal });
+  page.drawLine({ start: { x: W612 / 2 - 1.5 * inch, y: titleY - 0.1 * inch }, end: { x: W612 / 2 + 1.5 * inch, y: titleY - 0.1 * inch }, thickness: 1, color: gold });
+
+  // INFO GRID
+  const gridTop = titleY - 0.28 * inch;
+  const rowH    = 0.34 * inch;
+  const colW    = fW / 4;
+  const lbFrac  = 0.42;
+
+  const drawCell = (x, y, w, h, label) => {
+    page.drawRectangle({ x, y, width: w, height: h, color: white, borderColor: borderC, borderWidth: 0.6 });
+    const lbH = h * lbFrac;
+    page.drawRectangle({ x, y: y + h - lbH, width: w, height: lbH, color: charcoal });
+    page.drawText(label, { x: x + 4, y: y + h - lbH + 3, size: 6, font: bold, color: goldLight });
+    page.drawRectangle({ x, y, width: w, height: h - lbH, color: goldTint });
   };
 
-  headerCell('CHANGE ORDER NO.', '', L, 133);
-  headerCell('DATE', data.date || '', L + 133, 100);
-  headerCell('CAL BUILDERS PROJ #', data.job || '', L + 233, 133);
-  headerCell('GEN. CONTRACTOR PROJ #', '', L + 366, 166);
+  const drawCellVal = (value, x, y, h) => {
+    if (value) page.drawText(String(value), { x: x + 4, y: y + 6, size: 9, font: reg, color: charcoal });
+  };
 
-  // ── HEADER FIELDS ROW 2: PROJECT | LOCATION | GEN. CONTRACTOR ─
-  const row2LabelY = height - 168;
-  const row2ValY   = height - 190;
-  const row2H = 22;
+  // Row 1
+  const r1y = gridTop - rowH;
+  const r1L = ['CHANGE ORDER NO.', 'DATE', 'CAL BUILDERS PROJ #', 'GEN. CONTRACTOR PROJ #'];
+  const r1V = ['', data.date || '', data.job || '', ''];
+  for (let i = 0; i < 4; i++) {
+    const cx = mL + i * colW;
+    drawCell(cx, r1y, colW, rowH, r1L[i]);
+    drawCellVal(r1V[i], cx, r1y, rowH);
+  }
 
-  headerCell('PROJECT', '', L, 200);
-  headerCell('LOCATION', data.address || '', L + 200, 133);
-  headerCell('GEN. CONTRACTOR', data.gc_name || '', L + 333, 199);
+  // Row 2
+  const r2y = r1y - rowH;
+  drawCell(mL,             r2y, colW * 2, rowH, 'PROJECT');
+  drawCell(mL + colW * 2,  r2y, colW,     rowH, 'LOCATION');
+  drawCell(mL + colW * 3,  r2y, colW,     rowH, 'GEN. CONTRACTOR');
+  drawCellVal(data.job || '',     mL,            r2y, rowH);
+  drawCellVal(data.address || '', mL + colW * 2, r2y, rowH);
+  drawCellVal(data.gc_name || '', mL + colW * 3, r2y, rowH);
 
-  // ── DESCRIPTION LABEL ──────────────────────────────────────
-  page.drawText('Description of extra work for this project:', {
-    x: L, y: height - 210, size: 9, font: italicFont, color: dark
-  });
+  // DESCRIPTION
+  const descLabelY = r2y - 0.32 * inch;
+  page.drawText('Description of extra work for this project:', { x: mL, y: descLabelY, size: 8.5, font: boldIta, color: charcoal });
 
-  // ── DESCRIPTION BOX ────────────────────────────────────────
-  const descBoxY = height - 390;
-  const descBoxH = 175;
-  page.drawRectangle({ x: L, y: descBoxY, width: W, height: descBoxH, color: rgb(0.95, 0.97, 0.99), borderColor: bronze, borderWidth: 1 });
+  const descH = 2.4 * inch;
+  const descY = descLabelY - descH - 0.08 * inch;
+  page.drawRectangle({ x: mL, y: descY, width: fW, height: descH, color: goldTint, borderColor: borderC, borderWidth: 0.7 });
+  page.drawRectangle({ x: mL, y: descY, width: 3, height: descH, color: gold });
 
-  // Word-wrap description text
   if (data.description) {
     const words = data.description.split(' ');
-    let line = '', lineY = descBoxY + descBoxH - 18, lineH = 14;
+    let line = '', lineY = descY + descH - 16, lineH = 13;
     for (const word of words) {
       const test = line ? line + ' ' + word : word;
-      if (regularFont.widthOfTextAtSize(test, 10) > W - 16) {
-        if (lineY > descBoxY + 8) {
-          page.drawText(line, { x: L + 8, y: lineY, size: 10, font: regularFont, color: dark });
-          lineY -= lineH;
-        }
+      if (reg.widthOfTextAtSize(test, 9) > fW - 18) {
+        if (lineY > descY + 8) { page.drawText(line, { x: mL + 10, y: lineY, size: 9, font: reg, color: charcoal }); lineY -= lineH; }
         line = word;
       } else { line = test; }
     }
-    if (line && lineY > descBoxY + 8) {
-      page.drawText(line, { x: L + 8, y: lineY, size: 10, font: regularFont, color: dark });
-    }
+    if (line && lineY > descY + 8) page.drawText(line, { x: mL + 10, y: lineY, size: 9, font: reg, color: charcoal });
   }
 
-  // ── COST TABLE ─────────────────────────────────────────────
+  // FINANCIAL TABLE
   const matCost = parseFloat(data.material_cost) || 0;
-  const labCost = parseFloat(data.labor_cost) || 0;
+  const labCost = parseFloat(data.labor_cost)    || 0;
   const total   = matCost + labCost;
 
-  const tableX  = 200;
-  const tableW  = R - tableX;
-  const tableRows = [
-    { label: 'Labor:',                value: `$${labCost.toFixed(2)}`,  dark: false },
-    { label: 'Material:',             value: `$${matCost.toFixed(2)}`,  dark: false },
-    { label: 'P/O:',                  value: '$',                        dark: false },
-    { label: 'Total Change Order:',   value: `$${total.toFixed(2)}`,    dark: true  },
-    { label: 'Original Contract Amount:', value: '$',                    dark: false },
-    { label: 'Previous Change Orders:',   value: '$',                    dark: false },
-    { label: 'This Change Order:',    value: `$${total.toFixed(2)}`,    dark: false },
-    { label: 'New Contract Amount:',  value: '$',                        dark: true  },
+  const labelW  = 3.1 * inch;
+  const amtW    = 1.75 * inch;
+  const tableX  = mL + (fW - labelW - amtW) / 2;
+  const finRowH = 0.27 * inch;
+  const finTop  = descY - 0.28 * inch;
+
+  const finRows = [
+    { label: 'Labor:',                    val: labCost > 0 ? labCost.toFixed(2) : '', total: false },
+    { label: 'Material:',                 val: matCost > 0 ? matCost.toFixed(2) : '', total: false },
+    { label: 'P/O:',                      val: '',                                     total: false },
+    { label: 'Total Change Order:',       val: total > 0   ? total.toFixed(2)   : '', total: true  },
+    { label: 'Original Contract Amount:', val: '',                                     total: false },
+    { label: 'Previous Change Orders:',   val: '',                                     total: false },
+    { label: 'This Change Order:',        val: total > 0   ? total.toFixed(2)   : '', total: false },
+    { label: 'New Contract Amount:',      val: '',                                     total: true  },
   ];
 
-  const rowH   = 22;
-  const valColW = 130;
-  let rowY = descBoxY - 10 - (tableRows.length * rowH);
-
-  tableRows.forEach(row => {
-    const bg = row.dark ? dark : white;
-    const fg = row.dark ? white : dark;
-    const labelFont = row.dark ? boldFont : regularFont;
-
-    // Label cell
-    page.drawRectangle({ x: tableX, y: rowY, width: tableW - valColW, height: rowH, color: bg, borderColor: rgb(0.7,0.7,0.7), borderWidth: 0.5 });
-    page.drawText(row.label, { x: tableX + 6, y: rowY + 7, size: 9, font: labelFont, color: fg });
-
-    // Value cell
-    page.drawRectangle({ x: tableX + tableW - valColW, y: rowY, width: valColW, height: rowH, color: bg, borderColor: rgb(0.7,0.7,0.7), borderWidth: 0.5 });
-    // Show $ placeholder or actual value
-    const displayVal = (row.value === '$' || (!data.material_cost && !data.labor_cost && row.value.startsWith('$0'))) ? '$' : row.value;
-    page.drawText(displayVal, { x: tableX + tableW - valColW + 8, y: rowY + 7, size: 9, font: labelFont, color: fg });
-
-    rowY += rowH;
+  finRows.forEach((row, i) => {
+    const ry  = finTop - (i + 1) * finRowH;
+    const bgL = row.total ? charcoal : goldTint;
+    const fgL = row.total ? white    : charcoal;
+    const fnt = row.total ? bold     : reg;
+    page.drawRectangle({ x: tableX,          y: ry, width: labelW, height: finRowH, color: bgL,   borderColor: borderC, borderWidth: 0.6 });
+    page.drawText(row.label, { x: tableX + 8, y: ry + 7, size: 9, font: fnt, color: fgL });
+    page.drawRectangle({ x: tableX + labelW, y: ry, width: amtW,   height: finRowH, color: white, borderColor: borderC, borderWidth: 0.6 });
+    page.drawText('$', { x: tableX + labelW + 6, y: ry + 7, size: 9, font: reg, color: midGray });
+    if (row.val) page.drawText(row.val, { x: tableX + labelW + 20, y: ry + 7, size: 9, font: reg, color: charcoal });
   });
 
-  // ── LEGAL TEXT ─────────────────────────────────────────────
-  const legalY = rowY - (tableRows.length * rowH) - 20;
-  // recalculate: rowY is now at top of table after loop
-  const tableTopY = rowY; // rowY ended up at top
-  const legalTextY = descBoxY - (tableRows.length * rowH) - 30;
+  // LEGAL TEXT
+  const authY   = finTop - finRows.length * finRowH - 0.3 * inch;
+  const authTxt = 'In accordance with the subcontract agreement on the above-mentioned project, please add/deduct work requested.';
+  const authW   = italic.widthOfTextAtSize(authTxt, 8);
+  page.drawText(authTxt, { x: (W612 - authW) / 2, y: authY, size: 8, font: italic, color: midGray });
 
-  page.drawText('In accordance with the subcontract agreement on the above-mentioned project, please add/deduct work requested.', {
-    x: L, y: legalTextY, size: 7.5, font: italicFont, color: dark
-  });
+  // SIGNATURE BLOCKS
+  const sigTop = authY - 0.4 * inch;
+  const sigW   = (fW - 0.4 * inch) / 2;
+  const leftX  = mL;
+  const rightX = mL + sigW + 0.4 * inch;
 
-  // ── SIGNATURE BLOCKS ───────────────────────────────────────
-  const sigY = legalTextY - 20;
-  const sigW = (W / 2) - 6;
+  const sigBlock = (x, y, titleStr) => {
+    page.drawRectangle({ x, y, width: sigW, height: 0.25 * inch, color: charcoal });
+    page.drawText(titleStr, { x: x + 5, y: y + 7, size: 6.5, font: bold, color: goldLight });
+    const sl = (lx, ly, lx2) => page.drawLine({ start: { x: lx, y: ly }, end: { x: lx2, y: ly }, thickness: 0.7, color: borderC });
+    const lb = (txt, lx, ly)  => page.drawText(txt, { x: lx, y: ly, size: 7, font: reg, color: midGray });
+    const sigLineY = y - 0.5 * inch;
+    sl(x, sigLineY, x + sigW); lb('Signature', x, sigLineY - 0.12 * inch);
+    const nameY = sigLineY - 0.48 * inch;
+    sl(x, nameY, x + sigW); lb('Printed Name', x, nameY - 0.12 * inch);
+    const tdY = nameY - 0.58 * inch;
+    sl(x, tdY, x + sigW * 0.58); sl(x + sigW * 0.65, tdY, x + sigW);
+    lb('Title', x, tdY - 0.12 * inch); lb('Date', x + sigW * 0.65, tdY - 0.12 * inch);
+  };
 
-  // Left: A&J
-  page.drawRectangle({ x: L, y: sigY, width: sigW, height: 16, color: dark });
-  page.drawText('A & J CALIFORNIA BUILDERS, INC. — AUTHORIZED SIGNATURE', { x: L + 4, y: sigY + 4, size: 6.5, font: boldFont, color: bronze });
+  sigBlock(leftX,  sigTop, 'A & J CALIFORNIA BUILDERS, INC. - AUTHORIZED SIGNATURE');
+  sigBlock(rightX, sigTop, 'ACCEPTED BY - GENERAL CONTRACTOR / OWNER');
 
-  // Right: GC
-  page.drawRectangle({ x: L + sigW + 12, y: sigY, width: sigW, height: 16, color: dark });
-  page.drawText('ACCEPTED BY — GENERAL CONTRACTOR / OWNER', { x: L + sigW + 16, y: sigY + 4, size: 6.5, font: boldFont, color: bronze });
-
-  // Sig lines
-  const drawLine = (x1, y1, x2) => page.drawLine({ start: { x: x1, y: y1 }, end: { x: x2, y: y1 }, thickness: 0.5, color: rgb(0.5,0.5,0.5) });
-  const drawLabel = (text, x, y) => page.drawText(text, { x, y, size: 7, font: regularFont, color: rgb(0.5,0.5,0.5) });
-
-  // Left sig block
-  drawLine(L, sigY - 18, L + sigW);
-  drawLabel('Signature', L, sigY - 28);
-  drawLine(L, sigY - 44, L + sigW);
-  drawLabel('Printed Name', L, sigY - 54);
-  drawLine(L, sigY - 68, L + (sigW * 0.6));
-  drawLine(L + (sigW * 0.65), sigY - 68, L + sigW);
-  drawLabel('Title', L, sigY - 78);
-  drawLabel('Date', L + (sigW * 0.65), sigY - 78);
-
-  // Right sig block
-  const rx = L + sigW + 12;
-  drawLine(rx, sigY - 18, rx + sigW);
-  drawLabel('Signature', rx, sigY - 28);
-  drawLine(rx, sigY - 44, rx + sigW);
-  drawLabel('Printed Name', rx, sigY - 54);
-  drawLine(rx, sigY - 68, rx + (sigW * 0.6));
-  drawLine(rx + (sigW * 0.65), sigY - 68, rx + sigW);
-  drawLabel('Title', rx, sigY - 78);
-  drawLabel('Date', rx + (sigW * 0.65), sigY - 78);
-
-  // ── BOTTOM FOOTER ──────────────────────────────────────────
-  page.drawRectangle({ x: 0, y: 0, width: 612, height: 22, color: bronze });
-  const footerText = "A & J California Builders, Inc.  |  License # 949668  |  1261 Lincoln Ave, Suite 106, San José, CA 95125  |  408-690-7421";
-  const footerW = regularFont.widthOfTextAtSize(footerText, 7);
-  page.drawText(footerText, { x: (612 - footerW) / 2, y: 7, size: 7, font: regularFont, color: white });
+  // BOTTOM BAR + FOOTER
+  page.drawRectangle({ x: 0, y: 0, width: W612, height: 0.18 * inch, color: gold });
+  const ftxt  = 'A & J California Builders, Inc.  |  License # 949668  |  1261 Lincoln Ave, Suite 106, San Jose, CA 95125  |  408-690-7421';
+  const ftxtW = reg.widthOfTextAtSize(ftxt, 7);
+  page.drawText(ftxt, { x: (W612 - ftxtW) / 2, y: 0.25 * inch, size: 7, font: reg, color: midGray });
 
   const pdfBytes = await pdfDoc.save();
   return Buffer.from(pdfBytes);
 }
+
 
 // ── Routes ────────────────────────────────────────────────────
 
