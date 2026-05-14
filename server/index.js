@@ -88,14 +88,6 @@ async function generateCoPdf(data) {
   const headerTop    = H - 0.35 * inch;
   const headerBottom = H - 1.45 * inch;
   const headerH      = headerTop - headerBottom;
-  const logoSize     = 0.95 * inch;
-  const logoX        = mL;
-  const logoY        = headerBottom + (headerH - logoSize) / 2;
-
-  page.drawRectangle({ x: logoX, y: logoY, width: logoSize, height: logoSize, color: goldTint, borderColor: gold, borderWidth: 1 });
-  page.drawText('CALIFORNIA', { x: logoX + 8,  y: logoY + logoSize / 2 + 4, size: 7, font: bold, color: charcoal });
-  page.drawText('BUILDERS',   { x: logoX + 12, y: logoY + logoSize / 2 - 6, size: 7, font: bold, color: charcoal });
-
   const infoY = headerTop - 0.15 * inch;
   drawRight('A & J CALIFORNIA BUILDERS, INC.', mR, infoY, 12, bold, charcoal);
   drawRight('1261 Lincoln Avenue, Suite 106  |  San Jose, CA 95125', mR, infoY - 0.18 * inch, 8.5, reg, midGray);
