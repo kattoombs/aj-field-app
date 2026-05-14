@@ -131,23 +131,28 @@ async function generateCoPdf(data) {
     page.drawText(txt, { x: x + 4, y: y + 6, size: 9, font: reg, color: charcoal });
   };
 
+  // Extract just the 4-digit job number from "2601 — 26471 Weston..."
+  const jobNum  = (data.job || '').split('—')[0].trim();
+  // Extract project name (everything after the —)
+  const jobName = (data.job || '').includes('—') ? (data.job || '').split('—').slice(1).join('—').trim() : (data.job || '');
+
   // Row 1
   const r1y = gridTop - rowH;
   const r1L = ['CHANGE ORDER NO.', 'DATE', 'CAL BUILDERS PROJ #', 'GEN. CONTRACTOR PROJ #'];
-  const r1V = ['', data.date || '', data.job || '', ''];
+  const r1V = ['', data.date || '', jobNum, ''];
   for (let i = 0; i < 4; i++) {
     const cx = mL + i * colW;
     drawCell(cx, r1y, colW, rowH, r1L[i]);
     drawCellVal(r1V[i], cx, r1y, rowH, colW);
   }
 
-  // Row 2
+  // Row 2: PROJECT (1 col) | LOCATION (2 cols) | GEN. CONTRACTOR (1 col)
   const r2y = r1y - rowH;
-  drawCell(mL,             r2y, colW * 2, rowH, 'PROJECT');
-  drawCell(mL + colW * 2,  r2y, colW,     rowH, 'LOCATION');
+  drawCell(mL,             r2y, colW,     rowH, 'PROJECT');
+  drawCell(mL + colW,      r2y, colW * 2, rowH, 'LOCATION');
   drawCell(mL + colW * 3,  r2y, colW,     rowH, 'GEN. CONTRACTOR');
-  drawCellVal(data.job || '',     mL,            r2y, rowH, colW * 2);
-  drawCellVal(data.address || '', mL + colW * 2, r2y, rowH, colW);
+  drawCellVal(jobName,            mL,           r2y, rowH, colW);
+  drawCellVal(data.address || '', mL + colW,    r2y, rowH, colW * 2);
   drawCellVal(data.gc_name || '', mL + colW * 3, r2y, rowH, colW);
 
   // DESCRIPTION
