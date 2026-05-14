@@ -146,14 +146,14 @@ async function generateCoPdf(data) {
     drawCellVal(r1V[i], cx, r1y, rowH, colW);
   }
 
-  // Row 2: PROJECT (1 col) | LOCATION (2 cols) | GEN. CONTRACTOR (1 col)
+  // Row 2: PROJECT (1 col) | GEN. CONTRACTOR (1 col) | LOCATION (2 cols)
   const r2y = r1y - rowH;
   drawCell(mL,             r2y, colW,     rowH, 'PROJECT');
-  drawCell(mL + colW,      r2y, colW * 2, rowH, 'LOCATION');
-  drawCell(mL + colW * 3,  r2y, colW,     rowH, 'GEN. CONTRACTOR');
-  drawCellVal(jobName,            mL,           r2y, rowH, colW);
-  drawCellVal(data.address || '', mL + colW,    r2y, rowH, colW * 2);
-  drawCellVal(data.gc_name || '', mL + colW * 3, r2y, rowH, colW);
+  drawCell(mL + colW,      r2y, colW,     rowH, 'GEN. CONTRACTOR');
+  drawCell(mL + colW * 2,  r2y, colW * 2, rowH, 'LOCATION');
+  drawCellVal(jobName,            mL,            r2y, rowH, colW);
+  drawCellVal(data.gc_name || '', mL + colW,     r2y, rowH, colW);
+  drawCellVal(data.address || '', mL + colW * 2, r2y, rowH, colW * 2);
 
   // DESCRIPTION
   const descLabelY = r2y - 0.32 * inch;
