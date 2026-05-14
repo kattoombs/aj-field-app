@@ -155,7 +155,7 @@ async function generateCoPdf(data) {
   drawCellVal(data.gc_name || '', mL + colW,     r2y, rowH, colW);
   drawCellVal(data.address || '', mL + colW * 2, r2y, rowH, colW * 2);
 
-  // DESCRIPTION
+  // DESCRIPTION — draw static text then overlay fillable field with Aaron's text pre-loaded
   const descLabelY = r2y - 0.32 * inch;
   page.drawText('Description of extra work for this project:', { x: mL, y: descLabelY, size: 8.5, font: boldIta, color: charcoal });
 
@@ -164,34 +164,24 @@ async function generateCoPdf(data) {
   page.drawRectangle({ x: mL, y: descY, width: fW, height: descH, color: goldTint, borderColor: borderC, borderWidth: 0.7 });
   page.drawRectangle({ x: mL, y: descY, width: 3, height: descH, color: gold });
 
-  if (data.description) {
-    const words = data.description.split(' ');
-    let line = '', lineY = descY + descH - 16, lineH = 13;
-    for (const word of words) {
-      const test = line ? line + ' ' + word : word;
-      if (reg.widthOfTextAtSize(test, 9) > fW - 18) {
-        if (lineY > descY + 8) { page.drawText(line, { x: mL + 10, y: lineY, size: 9, font: reg, color: charcoal }); lineY -= lineH; }
-        line = word;
-      } else { line = test; }
-    }
-    if (line && lineY > descY + 8) page.drawText(line, { x: mL + 10, y: lineY, size: 9, font: reg, color: charcoal });
-  }
-
-  // FILLABLE FIELDS — CO# and GC Proj# in header row 1
-  // These overlay the goldTint value areas of their cells
+  // FILLABLE FIELDS — CO#, GC Proj#, Description, and financial fields
   const form = pdfDoc.getForm();
 
-  const addField = (name, x, y, w, h, defaultVal = '') => {
+  const addField = (name, x, y, w, h, defaultVal = '', multiline = false) => {
     const field = form.createTextField(name);
     field.setText(defaultVal);
+    if (multiline) field.enableMultiline();
     field.addToPage(page, { x: x + 2, y: y + 2, width: w - 4, height: h - 4, borderWidth: 0, backgroundColor: goldTint, textColor: charcoal, font: reg, fontSize: 9 });
   };
 
-  // CO# field — column 0 of row 1, value area (below label band)
+  // Description fillable — pre-loaded with Aaron's text, you can add more
+  addField('description', mL + 4, descY, fW - 4, descH, data.description || '', true);
+
+  // CO# and GC Proj# in header row 1
   const lbH_r1 = rowH * lbFrac;
   const valH   = rowH - lbH_r1;
-  addField('change_order_no', mL,              r1y, colW,     valH + 2);
-  addField('gc_proj_no',      mL + colW * 3,   r1y, colW,     valH + 2);
+  addField('change_order_no', mL,            r1y, colW, valH + 2);
+  addField('gc_proj_no',      mL + colW * 3, r1y, colW, valH + 2);
 
   // FINANCIAL TABLE
   const matCost = parseFloat(data.material_cost) || 0;
@@ -208,12 +198,12 @@ async function generateCoPdf(data) {
   const finRows = [
     { label: 'Labor:',                    val: labCost > 0 ? labCost.toFixed(2) : '', fillable: false, total: false },
     { label: 'Material:',                 val: matCost > 0 ? matCost.toFixed(2) : '', fillable: false, total: false },
-    { label: 'P/O:',                      val: '',                                     fillable: true,  total: false, fieldName: 'po' },
-    { label: 'Total Change Order:',       val: total > 0   ? total.toFixed(2)   : '', fillable: false, total: true  },
-    { label: 'Original Contract Amount:', val: '',                                     fillable: true,  total: false, fieldName: 'original_contract' },
-    { label: 'Previous Change Orders:',   val: '',                                     fillable: true,  total: false, fieldName: 'previous_cos' },
-    { label: 'This Change Order:',        val: total > 0   ? total.toFixed(2)   : '', fillable: false, total: false },
-    { label: 'New Contract Amount:',      val: '',                                     fillable: true,  total: true,  fieldName: 'new_contract' },
+    { label: 'P/O:',                      val: '',  fillable: true,  total: false, fieldName: 'po' },
+    { label: 'Total Change Order:',       val: '',  fillable: true,  total: true,  fieldName: 'total_co' },
+    { label: 'Original Contract Amount:', val: '',  fillable: true,  total: false, fieldName: 'original_contract' },
+    { label: 'Previous Change Orders:',   val: '',  fillable: true,  total: false, fieldName: 'previous_cos' },
+    { label: 'This Change Order:',        val: '',  fillable: true,  total: false, fieldName: 'this_co' },
+    { label: 'New Contract Amount:',      val: '',  fillable: true,  total: true,  fieldName: 'new_contract' },
   ];
 
   finRows.forEach((row, i) => {
@@ -231,13 +221,13 @@ async function generateCoPdf(data) {
     page.drawText('$', { x: tableX + labelW + 6, y: ry + 7, size: 9, font: reg, color: midGray });
 
     if (row.fillable) {
-      // add interactive text field
       const ff = form.createTextField(row.fieldName);
       ff.setText('');
       ff.addToPage(page, {
         x: tableX + labelW + 18, y: ry + 2,
         width: amtW - 22, height: finRowH - 4,
-        borderWidth: 0, backgroundColor: white, textColor: charcoal, font: reg, fontSize: 9
+        borderWidth: 0, backgroundColor: row.total ? charcoal : white,
+        textColor: row.total ? white : charcoal, font: reg, fontSize: 9
       });
     } else if (row.val) {
       page.drawText(row.val, { x: tableX + labelW + 20, y: ry + 7, size: 9, font: reg, color: charcoal });
