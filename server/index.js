@@ -131,10 +131,10 @@ async function generateCoPdf(data) {
     page.drawText(txt, { x: x + 4, y: y + 6, size: 9, font: reg, color: charcoal });
   };
 
-  // Extract just the 4-digit job number — handles em dash, en dash, or regular dash
-  const jobParts = (data.job || '').split(/\s*[—–-]\s*/);
-  const jobNum   = jobParts[0].trim();
-  const jobName  = jobParts.slice(1).join(' ').trim() || (data.job || '');
+  // Extract just the 4-digit job number — only split on " — " (space dash space) not every dash
+  const dashIdx = (data.job || '').indexOf(' — ');
+  const jobNum  = dashIdx >= 0 ? (data.job || '').slice(0, dashIdx).trim() : (data.job || '').split(/\s+/)[0];
+  const jobName = dashIdx >= 0 ? (data.job || '').slice(dashIdx + 3).trim() : (data.job || '');
 
   // Row 1
   const r1y = gridTop - rowH;
@@ -155,7 +155,7 @@ async function generateCoPdf(data) {
   drawCellVal(data.gc_name || '', mL + colW,     r2y, rowH, colW);
   drawCellVal(data.address || '', mL + colW * 2, r2y, rowH, colW * 2);
 
-  // DESCRIPTION — draw static text then overlay fillable field with Aaron's text pre-loaded
+  // DESCRIPTION — static text, Aaron's content printed, blank lines below for your additions
   const descLabelY = r2y - 0.32 * inch;
   page.drawText('Description of extra work for this project:', { x: mL, y: descLabelY, size: 8.5, font: boldIta, color: charcoal });
 
@@ -164,18 +164,28 @@ async function generateCoPdf(data) {
   page.drawRectangle({ x: mL, y: descY, width: fW, height: descH, color: goldTint, borderColor: borderC, borderWidth: 0.7 });
   page.drawRectangle({ x: mL, y: descY, width: 3, height: descH, color: gold });
 
-  // FILLABLE FIELDS — CO#, GC Proj#, Description, and financial fields
+  // Word-wrap Aaron's description text
+  if (data.description) {
+    const words = data.description.split(' ');
+    let line = '', lineY = descY + descH - 16, lineH = 13;
+    for (const word of words) {
+      const test = line ? line + ' ' + word : word;
+      if (reg.widthOfTextAtSize(test, 9) > fW - 18) {
+        if (lineY > descY + 8) { page.drawText(line, { x: mL + 10, y: lineY, size: 9, font: reg, color: charcoal }); lineY -= lineH; }
+        line = word;
+      } else { line = test; }
+    }
+    if (line && lineY > descY + 8) page.drawText(line, { x: mL + 10, y: lineY, size: 9, font: reg, color: charcoal });
+  }
+
+  // FILLABLE FIELDS — CO#, GC Proj#, and financial fields only
   const form = pdfDoc.getForm();
 
-  const addField = (name, x, y, w, h, defaultVal = '', multiline = false) => {
+  const addField = (name, x, y, w, h, defaultVal = '') => {
     const field = form.createTextField(name);
     field.setText(defaultVal);
-    if (multiline) field.enableMultiline();
     field.addToPage(page, { x: x + 2, y: y + 2, width: w - 4, height: h - 4, borderWidth: 0, backgroundColor: goldTint, textColor: charcoal, font: reg, fontSize: 9 });
   };
-
-  // Description fillable — pre-loaded with Aaron's text, you can add more
-  addField('description', mL + 4, descY, fW - 4, descH, data.description || '', true);
 
   // CO# and GC Proj# in header row 1
   const lbH_r1 = rowH * lbFrac;
@@ -226,8 +236,8 @@ async function generateCoPdf(data) {
       ff.addToPage(page, {
         x: tableX + labelW + 18, y: ry + 2,
         width: amtW - 22, height: finRowH - 4,
-        borderWidth: 0, backgroundColor: row.total ? charcoal : white,
-        textColor: row.total ? white : charcoal, font: reg, fontSize: 9
+        borderWidth: 0, backgroundColor: white,
+        textColor: charcoal, font: reg, fontSize: 9
       });
     } else if (row.val) {
       page.drawText(row.val, { x: tableX + labelW + 20, y: ry + 7, size: 9, font: reg, color: charcoal });
