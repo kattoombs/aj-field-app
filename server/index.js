@@ -164,6 +164,22 @@ async function generateCoPdf(data) {
     if (line && lineY > descY + 8) page.drawText(line, { x: mL + 10, y: lineY, size: 9, font: reg, color: charcoal });
   }
 
+  // FILLABLE FIELDS — CO# and GC Proj# in header row 1
+  // These overlay the goldTint value areas of their cells
+  const form = pdfDoc.getForm();
+
+  const addField = (name, x, y, w, h, defaultVal = '') => {
+    const field = form.createTextField(name);
+    field.setText(defaultVal);
+    field.addToPage(page, { x: x + 2, y: y + 2, width: w - 4, height: h - 4, borderWidth: 0, backgroundColor: goldTint, textColor: charcoal, font: reg, fontSize: 9 });
+  };
+
+  // CO# field — column 0 of row 1, value area (below label band)
+  const lbH_r1 = rowH * lbFrac;
+  const valH   = rowH - lbH_r1;
+  addField('change_order_no', mL,              r1y, colW,     valH + 2);
+  addField('gc_proj_no',      mL + colW * 3,   r1y, colW,     valH + 2);
+
   // FINANCIAL TABLE
   const matCost = parseFloat(data.material_cost) || 0;
   const labCost = parseFloat(data.labor_cost)    || 0;
@@ -175,15 +191,16 @@ async function generateCoPdf(data) {
   const finRowH = 0.27 * inch;
   const finTop  = descY - 0.28 * inch;
 
+  // rows: label | pre-filled value | fillable? | is total row
   const finRows = [
-    { label: 'Labor:',                    val: labCost > 0 ? labCost.toFixed(2) : '', total: false },
-    { label: 'Material:',                 val: matCost > 0 ? matCost.toFixed(2) : '', total: false },
-    { label: 'P/O:',                      val: '',                                     total: false },
-    { label: 'Total Change Order:',       val: total > 0   ? total.toFixed(2)   : '', total: true  },
-    { label: 'Original Contract Amount:', val: '',                                     total: false },
-    { label: 'Previous Change Orders:',   val: '',                                     total: false },
-    { label: 'This Change Order:',        val: total > 0   ? total.toFixed(2)   : '', total: false },
-    { label: 'New Contract Amount:',      val: '',                                     total: true  },
+    { label: 'Labor:',                    val: labCost > 0 ? labCost.toFixed(2) : '', fillable: false, total: false },
+    { label: 'Material:',                 val: matCost > 0 ? matCost.toFixed(2) : '', fillable: false, total: false },
+    { label: 'P/O:',                      val: '',                                     fillable: true,  total: false, fieldName: 'po' },
+    { label: 'Total Change Order:',       val: total > 0   ? total.toFixed(2)   : '', fillable: false, total: true  },
+    { label: 'Original Contract Amount:', val: '',                                     fillable: true,  total: false, fieldName: 'original_contract' },
+    { label: 'Previous Change Orders:',   val: '',                                     fillable: true,  total: false, fieldName: 'previous_cos' },
+    { label: 'This Change Order:',        val: total > 0   ? total.toFixed(2)   : '', fillable: false, total: false },
+    { label: 'New Contract Amount:',      val: '',                                     fillable: true,  total: true,  fieldName: 'new_contract' },
   ];
 
   finRows.forEach((row, i) => {
@@ -191,11 +208,27 @@ async function generateCoPdf(data) {
     const bgL = row.total ? charcoal : goldTint;
     const fgL = row.total ? white    : charcoal;
     const fnt = row.total ? bold     : reg;
-    page.drawRectangle({ x: tableX,          y: ry, width: labelW, height: finRowH, color: bgL,   borderColor: borderC, borderWidth: 0.6 });
+
+    // label cell
+    page.drawRectangle({ x: tableX, y: ry, width: labelW, height: finRowH, color: bgL, borderColor: borderC, borderWidth: 0.6 });
     page.drawText(row.label, { x: tableX + 8, y: ry + 7, size: 9, font: fnt, color: fgL });
-    page.drawRectangle({ x: tableX + labelW, y: ry, width: amtW,   height: finRowH, color: white, borderColor: borderC, borderWidth: 0.6 });
+
+    // amount cell
+    page.drawRectangle({ x: tableX + labelW, y: ry, width: amtW, height: finRowH, color: white, borderColor: borderC, borderWidth: 0.6 });
     page.drawText('$', { x: tableX + labelW + 6, y: ry + 7, size: 9, font: reg, color: midGray });
-    if (row.val) page.drawText(row.val, { x: tableX + labelW + 20, y: ry + 7, size: 9, font: reg, color: charcoal });
+
+    if (row.fillable) {
+      // add interactive text field
+      const ff = form.createTextField(row.fieldName);
+      ff.setText('');
+      ff.addToPage(page, {
+        x: tableX + labelW + 18, y: ry + 2,
+        width: amtW - 22, height: finRowH - 4,
+        borderWidth: 0, backgroundColor: white, textColor: charcoal, font: reg, fontSize: 9
+      });
+    } else if (row.val) {
+      page.drawText(row.val, { x: tableX + labelW + 20, y: ry + 7, size: 9, font: reg, color: charcoal });
+    }
   });
 
   // LEGAL TEXT
@@ -210,22 +243,36 @@ async function generateCoPdf(data) {
   const leftX  = mL;
   const rightX = mL + sigW + 0.4 * inch;
 
-  const sigBlock = (x, y, titleStr) => {
+  const sigBlock = (x, y, titleStr, prefix) => {
     page.drawRectangle({ x, y, width: sigW, height: 0.25 * inch, color: charcoal });
     page.drawText(titleStr, { x: x + 5, y: y + 7, size: 6.5, font: bold, color: goldLight });
     const sl = (lx, ly, lx2) => page.drawLine({ start: { x: lx, y: ly }, end: { x: lx2, y: ly }, thickness: 0.7, color: borderC });
     const lb = (txt, lx, ly)  => page.drawText(txt, { x: lx, y: ly, size: 7, font: reg, color: midGray });
+
     const sigLineY = y - 0.5 * inch;
     sl(x, sigLineY, x + sigW); lb('Signature', x, sigLineY - 0.12 * inch);
+
+    // Printed Name — fillable
     const nameY = sigLineY - 0.48 * inch;
     sl(x, nameY, x + sigW); lb('Printed Name', x, nameY - 0.12 * inch);
+    const nameField = form.createTextField(`${prefix}_printed_name`);
+    nameField.setText('');
+    nameField.addToPage(page, { x: x + 2, y: nameY + 1, width: sigW - 4, height: 0.22 * inch, borderWidth: 0, backgroundColor: white, textColor: charcoal, font: reg, fontSize: 9 });
+
+    // Title + Date — fillable
     const tdY = nameY - 0.58 * inch;
     sl(x, tdY, x + sigW * 0.58); sl(x + sigW * 0.65, tdY, x + sigW);
     lb('Title', x, tdY - 0.12 * inch); lb('Date', x + sigW * 0.65, tdY - 0.12 * inch);
+    const titleField = form.createTextField(`${prefix}_title`);
+    titleField.setText('');
+    titleField.addToPage(page, { x: x + 2, y: tdY + 1, width: sigW * 0.58 - 4, height: 0.22 * inch, borderWidth: 0, backgroundColor: white, textColor: charcoal, font: reg, fontSize: 9 });
+    const dateField = form.createTextField(`${prefix}_date`);
+    dateField.setText('');
+    dateField.addToPage(page, { x: x + sigW * 0.65, y: tdY + 1, width: sigW * 0.35 - 2, height: 0.22 * inch, borderWidth: 0, backgroundColor: white, textColor: charcoal, font: reg, fontSize: 9 });
   };
 
-  sigBlock(leftX,  sigTop, 'A & J CALIFORNIA BUILDERS, INC. - AUTHORIZED SIGNATURE');
-  sigBlock(rightX, sigTop, 'ACCEPTED BY - GENERAL CONTRACTOR / OWNER');
+  sigBlock(leftX,  sigTop, 'A & J CALIFORNIA BUILDERS, INC. - AUTHORIZED SIGNATURE', 'aj');
+  sigBlock(rightX, sigTop, 'ACCEPTED BY - GENERAL CONTRACTOR / OWNER', 'gc');
 
   // BOTTOM BAR + FOOTER
   page.drawRectangle({ x: 0, y: 0, width: W612, height: 0.18 * inch, color: gold });
