@@ -302,7 +302,7 @@ async function generateCoPdf(data) {
 
 // GET all active jobs
 app.get('/api/jobs', (req, res) => {
-  const jobs = db.prepare('SELECT * FROM jobs WHERE active = 1 ORDER BY job_number').all();
+  const jobs = db.prepare('SELECT * FROM jobs WHERE active = 1 ORDER BY job_number DESC').all();
   res.json(jobs);
 });
 
