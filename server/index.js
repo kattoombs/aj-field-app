@@ -386,6 +386,7 @@ app.post('/api/submit/tm', async (req, res) => {
     + emailRow('Hours', d.hours)
     + emailRow('Work Description', d.description)
     + emailRow('Materials', d.materials)
+    + (d.office_message ? emailRow('📝 Message to Office', d.office_message) : '')
     + `</table>`
     + emailCostBox(mat.toFixed(2), lab.toFixed(2), total.toFixed(2), 'TOTAL T&amp;M AMOUNT')
     + emailFooter();
@@ -434,6 +435,7 @@ app.post('/api/submit/co', async (req, res) => {
     + emailRow('Job Address', d.address)
     + emailRow('Description of Extra Work', d.description)
     + emailRow('Materials', d.materials)
+    + (d.office_message ? emailRow('📝 Message to Office', d.office_message) : '')
     + `</table>`
     + emailCostBox(mat.toFixed(2), lab.toFixed(2), total.toFixed(2), 'TOTAL CHANGE ORDER AMOUNT')
     + emailFooter();
