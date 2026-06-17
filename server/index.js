@@ -50,6 +50,7 @@ if (adminCount.c === 0) {
 // ── Email ─────────────────────────────────────────────────────
 const resend = new Resend(process.env.RESEND_API_KEY);
 const OFFICE_EMAIL = process.env.OFFICE_EMAIL || 'kathie.calbuilders@gmail.com';
+const OFFICE_EMAILS = OFFICE_EMAIL.split(',').map(e => e.trim());
 
 // written
 
@@ -394,7 +395,7 @@ app.post('/api/submit/tm', async (req, res) => {
   try {
     await resend.emails.send({
       from: 'AJ Field App <onboarding@resend.dev>',
-      to: OFFICE_EMAIL,
+      to: OFFICE_EMAILS,
       subject: `T&M Tag — ${d.job || 'Unassigned'} — ${d.date || new Date().toLocaleDateString()}`,
       html
     });
@@ -443,7 +444,7 @@ app.post('/api/submit/co', async (req, res) => {
   try {
     const payload = {
       from: 'AJ Field App <onboarding@resend.dev>',
-      to: OFFICE_EMAIL,
+      to: OFFICE_EMAILS,
       subject: `Change Order — ${d.job || 'Unassigned'} — ${d.date || new Date().toLocaleDateString()}`,
       html
     };
