@@ -454,7 +454,8 @@ app.post('/api/submit/co', async (req, res) => {
         content: pdfBuffer.toString('base64')
       }];
     }
-    await resend.emails.send(payload);
+    const coSendResult = await resend.emails.send(payload);
+    console.log("Resend CO send result:", JSON.stringify(coSendResult));
 
     if (d.submitter_email) {
       await resend.emails.send({
