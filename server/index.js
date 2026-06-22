@@ -394,14 +394,14 @@ app.post('/api/submit/tm', async (req, res) => {
 
   try {
     await resend.emails.send({
-      from: 'AJ Field App <onboarding@resend.dev>',
+      from: 'AJ Field App <field@bayareacaliforniabuilders.com>',
       to: OFFICE_EMAILS,
       subject: `T&M Tag — ${d.job || 'Unassigned'} — ${d.date || new Date().toLocaleDateString()}`,
       html
     });
     if (d.submitter_email) {
       await resend.emails.send({
-        from: 'AJ Field App <onboarding@resend.dev>',
+        from: 'AJ Field App <field@bayareacaliforniabuilders.com>',
         to: d.submitter_email,
         subject: `✓ T&M Tag Received — ${d.job || 'Unassigned'}`,
         html: `<p style="font-family:sans-serif;">Your T&M tag for <strong>${d.job || 'Unassigned'}</strong> on ${d.date} was received. Total: <strong>$${total.toFixed(2)}</strong></p>`
@@ -443,7 +443,7 @@ app.post('/api/submit/co', async (req, res) => {
 
   try {
     const payload = {
-      from: 'AJ Field App <onboarding@resend.dev>',
+      from: 'AJ Field App <field@bayareacaliforniabuilders.com>',
       to: OFFICE_EMAILS,
       subject: `Change Order — ${d.job || 'Unassigned'} — ${d.date || new Date().toLocaleDateString()}`,
       html
@@ -459,7 +459,7 @@ app.post('/api/submit/co', async (req, res) => {
 
     if (d.submitter_email) {
       await resend.emails.send({
-        from: 'AJ Field App <onboarding@resend.dev>',
+        from: 'AJ Field App <field@bayareacaliforniabuilders.com>',
         to: d.submitter_email,
         subject: `✓ Change Order Received — ${d.job || 'Unassigned'}`,
         html: `<p style="font-family:sans-serif;">Your change order for <strong>${d.job || 'Unassigned'}</strong> on ${d.date} was received. Total: <strong>$${total.toFixed(2)}</strong></p>`
