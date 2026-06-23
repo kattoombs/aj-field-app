@@ -222,6 +222,19 @@ async function generateCoPdf(data) {
     }
     if (line && lineY > descY + 8) page.drawText(line, { x: mL + 10, y: lineY, size: 9, font: reg, color: charcoal });
   }
+  // Overlay transparent fillable field so Kathie can add to description
+  const descField = pdfDoc.getForm().createTextField("description_notes");
+  descField.setText("");
+  descField.enableMultiline();
+  descField.addToPage(page, {
+    x: mL + 4, y: descY + 2,
+    width: fW - 8, height: descH - 4,
+    borderWidth: 0,
+    backgroundColor: rgb(1, 1, 1, 0),
+    textColor: charcoal,
+    font: reg,
+    fontSize: 9
+  });
 
   const form = pdfDoc.getForm();
   const addField = (name, x, y, w, h, defaultVal = '') => {
