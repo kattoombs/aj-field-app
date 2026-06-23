@@ -385,27 +385,39 @@
         </div>
       </div>
       <div id="admin-panel" class="hidden">
-        <div class="add-job-form">
-          <h4>Add New Job</h4>
-          <div class="add-job-row">
-            <div class="field">
-              <label>Job #</label>
-              <input type="text" id="new-job-num" placeholder="2624">
+        <div style="display:flex;gap:10px;margin-bottom:16px;">
+          <button onclick="showAdminTab('gcs')" id="tab-gcs" style="flex:1;padding:10px;background:#D9D8D6;color:#140409;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">GC List</button>
+          <button onclick="showAdminTab('jobs')" id="tab-jobs" style="flex:1;padding:10px;background:#A27339;color:#FFF8F0;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Job List</button>
+          <button onclick="showAdminTab('subs')" id="tab-subs" style="flex:1;padding:10px;background:#D9D8D6;color:#140409;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Submissions Log</button>
+        </div>
+        <div id="admin-jobs-panel">
+          <div class="add-job-form">
+            <h4>Add New Job</h4>
+            <div class="add-job-row">
+              <div class="field"><label>Job #</label><input type="text" id="new-job-num" placeholder="2624"></div>
+              <div class="field"><label>Job Name</label><input type="text" id="new-job-name" placeholder="Project Name / Address"></div>
+              <button class="add-job-btn" onclick="addJob()">+ Add</button>
             </div>
-            <div class="field">
-              <label>Job Name</label>
-              <input type="text" id="new-job-name" placeholder="Project Name / Address">
-            </div>
-            <button class="add-job-btn" onclick="addJob()">+ Add</button>
+          </div>
+          <div class="jobs-list" id="admin-jobs-list">
+            <p style="color:#888; text-align:center; padding: 20px;">Loading jobs...</p>
           </div>
         </div>
-        <div class="jobs-list" id="admin-jobs-list">
-        <div style="display:flex;gap:10px;margin-bottom:16px;"><button onclick="showAdminTab('gcs')" id="tab-gcs" style="flex:1;padding:10px;background:#D9D8D6;color:#140409;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">GC List</button><button onclick="showAdminTab('jobs')" id="tab-jobs" style="flex:1;padding:10px;background:#A27339;color:#FFF8F0;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Job List</button><button onclick="showAdminTab('subs')" id="tab-subs" style="flex:1;padding:10px;background:#D9D8D6;color:#140409;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Submissions Log</button></div><div id="admin-jobs-panel">
-          <p style="color:#888; text-align:center; padding: 20px;">Loading jobs...</p>
+        <div id="admin-gcs-panel" style="display:none;">
+          <div class="add-job-form">
+            <h4>Add New GC</h4>
+            <div class="add-job-row">
+              <div class="field"><label>GC Name</label><input type="text" id="new-gc-name" placeholder="Company Name"></div>
+              <div class="field"><label>Address</label><input type="text" id="new-gc-address" placeholder="123 Main St, City, CA"></div>
+              <button class="add-job-btn" onclick="addGC()">+ Add</button>
+            </div>
+          </div>
+          <div id="admin-gcs-list"><p style="color:#888;text-align:center;padding:20px;">Loading GCs...</p></div>
+        </div>
+        <div id="admin-subs-panel" style="display:none;">
+          <div id="admin-subs-list"><p style="color:#888;text-align:center;padding:20px;">Loading submissions...</p></div>
         </div>
       </div>
-        </div><div id="admin-gcs-panel" style="display:none;"><div class="add-job-form"><h4>Add New GC</h4><div class="add-job-row"><div class="field"><label>GC Name</label><input type="text" id="new-gc-name" placeholder="Company Name"></div><div class="field"><label>Address</label><input type="text" id="new-gc-address" placeholder="123 Main St, City, CA"></div><button class="add-job-btn" onclick="addGC()">+ Add</button></div></div><div id="admin-gcs-list"><p style="color:#888;text-align:center;padding:20px;">Loading GCs...</p></div></div><div id="admin-subs-panel" style="display:none;"><div id="admin-subs-list"><p style="color:#888;text-align:center;padding:20px;">Loading submissions...</p></div></div>
-    </div>
 
   </div>
   <div id="toast"></div>
