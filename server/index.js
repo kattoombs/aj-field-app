@@ -210,19 +210,18 @@ async function generateCoPdf(data) {
   page.drawRectangle({ x: mL, y: descY, width: fW, height: descH, color: goldTint, borderColor: borderC, borderWidth: 0.7 });
   page.drawRectangle({ x: mL, y: descY, width: 3, height: descH, color: gold });
 
-  // Fully editable description field pre-loaded with Aaron's text
-  const descField = pdfDoc.getForm().createTextField("description");
-  descField.setText(data.description || "");
-  descField.enableMultiline();
-  descField.addToPage(page, {
-    x: mL + 4, y: descY + 2,
-    width: fW - 8, height: descH - 4,
-    borderWidth: 0,
-    backgroundColor: goldTint,
-    textColor: charcoal,
-    font: reg,
-    fontSize: 9
-  });
+  if (data.description) {
+    const words = data.description.split(' ');
+    let line = '', lineY = descY + descH - 16, lineH = 13;
+    for (const word of words) {
+      const test = line ? line + ' ' + word : word;
+      if (reg.widthOfTextAtSize(test, 9) > fW - 18) {
+        if (lineY > descY + 8) { page.drawText(line, { x: mL + 10, y: lineY, size: 9, font: reg, color: charcoal }); lineY -= lineH; }
+        line = word;
+      } else { line = test; }
+    }
+    if (line && lineY > descY + 8) page.drawText(line, { x: mL + 10, y: lineY, size: 9, font: reg, color: charcoal });
+  }
 
   const form = pdfDoc.getForm();
   const addField = (name, x, y, w, h, defaultVal = '') => {
