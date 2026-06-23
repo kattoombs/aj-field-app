@@ -28,6 +28,12 @@ db.exec(`
     active INTEGER DEFAULT 1,
     created_at TEXT DEFAULT (datetime('now'))
   );
+  CREATE TABLE IF NOT EXISTS gcs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    address TEXT DEFAULT '',
+    active INTEGER DEFAULT 1
+  );
   CREATE TABLE IF NOT EXISTS submissions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     type TEXT NOT NULL,
@@ -41,6 +47,58 @@ db.exec(`
   );
 `);
 
+// Seed GCs if empty
+const gcCount = db.prepare('SELECT COUNT(*) as c FROM gcs').get();
+if (gcCount.c === 0) {
+  const insertGC = db.prepare('INSERT INTO gcs (name, address) VALUES (?, ?)');
+  const gcs = [
+    ['A&J California Builders, Inc.', '1261 Lincoln Ave STE106, San Jose, CA 95125'],
+    ['Arco Murray', ''],
+    ['Bay Area Builders, Inc.', '3360 De La Cruz Blvd., Santa Clara, CA 95054'],
+    ['Brooke Shaw Builder', '2324 Shibley Ave., San Jose, CA 95125'],
+    ['Bruce E. Boyle Construction, Inc.', '191 Lemoore Drive, San Carlos, CA 94070'],
+    ['BSM Construction, Inc.', '2575 Stanwell Dr. Second Floor, Concord, CA 94520'],
+    ['Casaccia Construction', '100 Mary Way, Los Gatos, CA 95032'],
+    ['Center-Line Construction, Inc.', '918 Washington St., San Carlos, CA 94070'],
+    ['Challenger School', '711 E. Gish Rd., San Jose, CA 95112'],
+    ['Citadel, Inc.', '75 E. Santa Clara St., San Jose, CA'],
+    ['COBE Construction', '498 Salmar Ave., Campbell, CA 95008'],
+    ['Cody Vermette Group, Inc.', '1305 Elmer St., Belmont, CA 94002'],
+    ['Constructive Solutions, Inc.', '2041 Pioneer Ct. Ste. 208, San Mateo, CA 94403'],
+    ['Decker Engineering & Construction', '1261 Lincoln Ave. Ste. 220, San Jose, CA 95125'],
+    ['First Finish, LLC', '6240 Old Dobbin Lane STE 190, Columbia, MD 21045'],
+    ['GKW Constructors, Inc.', ''],
+    ['Innovative Project Solutions Inc.', '50 California St. 15th Floor, San Francisco, CA 94111'],
+    ['J.M. Stitt Construction, Inc.', '3165 Palisades Dr., Corona, CA 92878'],
+    ['John Donovan', '23005 Del Monte Way, Los Gatos, CA 95030'],
+    ['John Panos', 'P.O. BOX 510, San Martin, CA 95046'],
+    ['Kenson Adventures', ''],
+    ['Kent Construction', '8505 Church St. Ste. 12, Gilroy, CA 95020'],
+    ['La Rinconada Country Club', '14595 Clearview Drive, Los Gatos, CA 95032'],
+    ['Lusardi Construction Company', '1570 Linda Vista Dr., San Marcos, CA 92078'],
+    ['LWG Construction, Inc.', '280 Digital Dr., Morgan Hill, CA 95037'],
+    ['Mike McCloud Construction', '1073 Thornton Way, San Jose, CA 95128'],
+    ['Nikki Chan & Mimi Dao', '1093 Normandy Drive, Campbell, CA 95008'],
+    ['OPI Commercial Builders, Inc.', '1202 Lincoln Avenue, Ste 10, San Jose, CA 95125'],
+    ['Pacific General Construction', '1150 Cadillac Court, Milpitas, CA 95035'],
+    ['RL Brackett Construction', '3400 De La Cruz Blvd. Unit M, Santa Clara, CA 95054'],
+    ['S.B.C.C.', ''],
+    ['Scott Daniels', '1540 Miramonte, Los Altos, CA 94024'],
+    ['Seegert Construction', '3098 Industrial Blvd, Sacramento, CA 95691'],
+    ['Snipes Construction Inc.', '4810 Golden Foothill Pkwy #8, El Dorado Hills, CA 95762'],
+    ['South Bay Construction', '1711 Dell Avenue, Campbell, CA 95008'],
+    ['Steed Construction, Inc.', '1250 E. Iron Eagle Dr. Ste. 200, Eagle, ID 83616'],
+    ['Steve Casaccia', '100 Mary Way, Los Gatos, CA 95032'],
+    ['Suner Corp', ''],
+    ['The James Group', '7691 Hanna Street, Gilroy, CA 95020'],
+    ['TICO Construction, Inc.', '1585 Terminal Ave., San Jose, CA 95112'],
+    ['Valley Design & Construction, Inc.', '1180 Coleman Ave., San Jose, CA 95110'],
+    ['WDS Construction', '100 Tower Dr., Beaver Dam, WI 53916'],
+    ['West Broadway Building Co.', '4590 MacArthur Blvd. Ste. 500, Newport Beach, CA 92660'],
+  ];
+  gcs.forEach(([name, address]) => insertGC.run(name, address));
+}
+
 // Seed admin user if empty
 const adminCount = db.prepare('SELECT COUNT(*) as c FROM admin_users').get();
 if (adminCount.c === 0) {
@@ -52,8 +110,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const OFFICE_EMAIL = process.env.OFFICE_EMAIL || 'kathie.calbuilders@gmail.com';
 const OFFICE_EMAILS = OFFICE_EMAIL.split(',').map(e => e.trim());
 
-// written
-
+// ── PDF Generator ─────────────────────────────────────────────
 async function generateCoPdf(data) {
   const pdfDoc = await PDFDocument.create();
   const page   = pdfDoc.addPage([612, 792]);
@@ -82,31 +139,25 @@ async function generateCoPdf(data) {
     page.drawText(text, { x: rightX - tw, y, size, font, color });
   };
 
-  // TOP GOLD BAR
   page.drawRectangle({ x: 0, y: H - 0.18 * inch, width: W612, height: 0.18 * inch, color: gold });
 
-  // HEADER
   const headerTop    = H - 0.35 * inch;
   const headerBottom = H - 1.45 * inch;
-  const headerH      = headerTop - headerBottom;
   const infoY = headerTop - 0.15 * inch;
   drawRight('A & J CALIFORNIA BUILDERS, INC.', mR, infoY, 12, bold, charcoal);
   drawRight('1261 Lincoln Avenue, Suite 106  |  San Jose, CA 95125', mR, infoY - 0.18 * inch, 8.5, reg, midGray);
   drawRight('Office: 408-690-7421', mR, infoY - 0.33 * inch, 8.5, reg, midGray);
   drawRight("California State Contractor's License # 949668", mR, infoY - 0.48 * inch, 8.5, reg, midGray);
 
-  // GOLD DIVIDER
   const divY = headerBottom - 0.05 * inch;
   page.drawLine({ start: { x: mL, y: divY }, end: { x: mR, y: divY }, thickness: 2.5, color: gold });
 
-  // TITLE
   const titleY   = divY - 0.38 * inch;
   const titleTxt = 'C H A N G E   O R D E R';
   const titleW2  = bold.widthOfTextAtSize(titleTxt, 17);
   page.drawText(titleTxt, { x: (W612 - titleW2) / 2, y: titleY, size: 17, font: bold, color: charcoal });
   page.drawLine({ start: { x: W612 / 2 - 1.5 * inch, y: titleY - 0.1 * inch }, end: { x: W612 / 2 + 1.5 * inch, y: titleY - 0.1 * inch }, thickness: 1, color: gold });
 
-  // INFO GRID
   const gridTop = titleY - 0.28 * inch;
   const rowH    = 0.34 * inch;
   const colW    = fW / 4;
@@ -124,20 +175,16 @@ async function generateCoPdf(data) {
     if (!value) return;
     let txt = String(value);
     if (maxW) {
-      while (txt.length > 1 && reg.widthOfTextAtSize(txt, 9) > maxW - 8) {
-        txt = txt.slice(0, -1);
-      }
+      while (txt.length > 1 && reg.widthOfTextAtSize(txt, 9) > maxW - 8) txt = txt.slice(0, -1);
       if (txt.length < String(value).length) txt = txt.slice(0, -1) + '...';
     }
     page.drawText(txt, { x: x + 4, y: y + 6, size: 9, font: reg, color: charcoal });
   };
 
-  // Extract just the 4-digit job number — only split on " — " (space dash space) not every dash
   const dashIdx = (data.job || '').indexOf(' — ');
   const jobNum  = dashIdx >= 0 ? (data.job || '').slice(0, dashIdx).trim() : (data.job || '').split(/\s+/)[0];
   const jobName = dashIdx >= 0 ? (data.job || '').slice(dashIdx + 3).trim() : (data.job || '');
 
-  // Row 1
   const r1y = gridTop - rowH;
   const r1L = ['CHANGE ORDER NO.', 'DATE', 'CAL BUILDERS PROJ #', 'GEN. CONTRACTOR PROJ #'];
   const r1V = ['', data.date || '', jobNum, ''];
@@ -147,7 +194,6 @@ async function generateCoPdf(data) {
     drawCellVal(r1V[i], cx, r1y, rowH, colW);
   }
 
-  // Row 2: PROJECT (1 col) | GEN. CONTRACTOR (1 col) | LOCATION (2 cols)
   const r2y = r1y - rowH;
   drawCell(mL,             r2y, colW,     rowH, 'PROJECT');
   drawCell(mL + colW,      r2y, colW,     rowH, 'GEN. CONTRACTOR');
@@ -156,7 +202,6 @@ async function generateCoPdf(data) {
   drawCellVal(data.gc_name || '', mL + colW,     r2y, rowH, colW);
   drawCellVal(data.address || '', mL + colW * 2, r2y, rowH, colW * 2);
 
-  // DESCRIPTION — static text, Aaron's content printed, blank lines below for your additions
   const descLabelY = r2y - 0.32 * inch;
   page.drawText('Description of extra work for this project:', { x: mL, y: descLabelY, size: 8.5, font: boldIta, color: charcoal });
 
@@ -165,7 +210,6 @@ async function generateCoPdf(data) {
   page.drawRectangle({ x: mL, y: descY, width: fW, height: descH, color: goldTint, borderColor: borderC, borderWidth: 0.7 });
   page.drawRectangle({ x: mL, y: descY, width: 3, height: descH, color: gold });
 
-  // Word-wrap Aaron's description text
   if (data.description) {
     const words = data.description.split(' ');
     let line = '', lineY = descY + descH - 16, lineH = 13;
@@ -179,22 +223,18 @@ async function generateCoPdf(data) {
     if (line && lineY > descY + 8) page.drawText(line, { x: mL + 10, y: lineY, size: 9, font: reg, color: charcoal });
   }
 
-  // FILLABLE FIELDS — CO#, GC Proj#, and financial fields only
   const form = pdfDoc.getForm();
-
   const addField = (name, x, y, w, h, defaultVal = '') => {
     const field = form.createTextField(name);
     field.setText(defaultVal);
     field.addToPage(page, { x: x + 2, y: y + 2, width: w - 4, height: h - 4, borderWidth: 0, backgroundColor: goldTint, textColor: charcoal, font: reg, fontSize: 9 });
   };
 
-  // CO# and GC Proj# in header row 1
   const lbH_r1 = rowH * lbFrac;
   const valH   = rowH - lbH_r1;
   addField('change_order_no', mL,            r1y, colW, valH + 2);
   addField('gc_proj_no',      mL + colW * 3, r1y, colW, valH + 2);
 
-  // FINANCIAL TABLE
   const matCost = parseFloat(data.material_cost) || 0;
   const labCost = parseFloat(data.labor_cost)    || 0;
   const total   = matCost + labCost;
@@ -205,16 +245,15 @@ async function generateCoPdf(data) {
   const finRowH = 0.27 * inch;
   const finTop  = descY - 0.28 * inch;
 
-  // rows: label | pre-filled value | fillable? | is total row
   const finRows = [
     { label: 'Labor:',                    val: labCost > 0 ? labCost.toFixed(2) : '', fillable: false, total: false },
     { label: 'Material:',                 val: matCost > 0 ? matCost.toFixed(2) : '', fillable: false, total: false },
-    { label: 'P/O:',                      val: '',  fillable: true,  total: false, fieldName: 'po' },
-    { label: 'Total Change Order:',       val: '',  fillable: true,  total: true,  fieldName: 'total_co' },
-    { label: 'Original Contract Amount:', val: '',  fillable: true,  total: false, fieldName: 'original_contract' },
-    { label: 'Previous Change Orders:',   val: '',  fillable: true,  total: false, fieldName: 'previous_cos' },
-    { label: 'This Change Order:',        val: '',  fillable: true,  total: false, fieldName: 'this_co' },
-    { label: 'New Contract Amount:',      val: '',  fillable: true,  total: true,  fieldName: 'new_contract' },
+    { label: 'P/O:',                      val: '', fillable: true,  total: false, fieldName: 'po' },
+    { label: 'Total Change Order:',       val: '', fillable: true,  total: true,  fieldName: 'total_co' },
+    { label: 'Original Contract Amount:', val: '', fillable: true,  total: false, fieldName: 'original_contract' },
+    { label: 'Previous Change Orders:',   val: '', fillable: true,  total: false, fieldName: 'previous_cos' },
+    { label: 'This Change Order:',        val: '', fillable: true,  total: false, fieldName: 'this_co' },
+    { label: 'New Contract Amount:',      val: '', fillable: true,  total: true,  fieldName: 'new_contract' },
   ];
 
   finRows.forEach((row, i) => {
@@ -222,36 +261,24 @@ async function generateCoPdf(data) {
     const bgL = row.total ? charcoal : goldTint;
     const fgL = row.total ? white    : charcoal;
     const fnt = row.total ? bold     : reg;
-
-    // label cell
     page.drawRectangle({ x: tableX, y: ry, width: labelW, height: finRowH, color: bgL, borderColor: borderC, borderWidth: 0.6 });
     page.drawText(row.label, { x: tableX + 8, y: ry + 7, size: 9, font: fnt, color: fgL });
-
-    // amount cell
     page.drawRectangle({ x: tableX + labelW, y: ry, width: amtW, height: finRowH, color: white, borderColor: borderC, borderWidth: 0.6 });
     page.drawText('$', { x: tableX + labelW + 6, y: ry + 7, size: 9, font: reg, color: midGray });
-
     if (row.fillable) {
       const ff = form.createTextField(row.fieldName);
       ff.setText('');
-      ff.addToPage(page, {
-        x: tableX + labelW + 18, y: ry + 2,
-        width: amtW - 22, height: finRowH - 4,
-        borderWidth: 0, backgroundColor: white,
-        textColor: charcoal, font: reg, fontSize: 9
-      });
+      ff.addToPage(page, { x: tableX + labelW + 18, y: ry + 2, width: amtW - 22, height: finRowH - 4, borderWidth: 0, backgroundColor: white, textColor: charcoal, font: reg, fontSize: 9 });
     } else if (row.val) {
       page.drawText(row.val, { x: tableX + labelW + 20, y: ry + 7, size: 9, font: reg, color: charcoal });
     }
   });
 
-  // LEGAL TEXT
   const authY   = finTop - finRows.length * finRowH - 0.3 * inch;
   const authTxt = 'In accordance with the subcontract agreement on the above-mentioned project, please add/deduct work requested.';
   const authW   = italic.widthOfTextAtSize(authTxt, 8);
   page.drawText(authTxt, { x: (W612 - authW) / 2, y: authY, size: 8, font: italic, color: midGray });
 
-  // SIGNATURE BLOCKS
   const sigTop = authY - 0.4 * inch;
   const sigW   = (fW - 0.4 * inch) / 2;
   const leftX  = mL;
@@ -262,18 +289,13 @@ async function generateCoPdf(data) {
     page.drawText(titleStr, { x: x + 5, y: y + 7, size: 6.5, font: bold, color: goldLight });
     const sl = (lx, ly, lx2) => page.drawLine({ start: { x: lx, y: ly }, end: { x: lx2, y: ly }, thickness: 0.7, color: borderC });
     const lb = (txt, lx, ly)  => page.drawText(txt, { x: lx, y: ly, size: 7, font: reg, color: midGray });
-
     const sigLineY = y - 0.5 * inch;
     sl(x, sigLineY, x + sigW); lb('Signature', x, sigLineY - 0.12 * inch);
-
-    // Printed Name — fillable
     const nameY = sigLineY - 0.48 * inch;
     sl(x, nameY, x + sigW); lb('Printed Name', x, nameY - 0.12 * inch);
     const nameField = form.createTextField(`${prefix}_printed_name`);
     nameField.setText('');
     nameField.addToPage(page, { x: x + 2, y: nameY + 1, width: sigW - 4, height: 0.22 * inch, borderWidth: 0, backgroundColor: white, textColor: charcoal, font: reg, fontSize: 9 });
-
-    // Title + Date — fillable
     const tdY = nameY - 0.58 * inch;
     sl(x, tdY, x + sigW * 0.58); sl(x + sigW * 0.65, tdY, x + sigW);
     lb('Title', x, tdY - 0.12 * inch); lb('Date', x + sigW * 0.65, tdY - 0.12 * inch);
@@ -288,7 +310,6 @@ async function generateCoPdf(data) {
   sigBlock(leftX,  sigTop, 'A & J CALIFORNIA BUILDERS, INC. - AUTHORIZED SIGNATURE', 'aj');
   sigBlock(rightX, sigTop, 'ACCEPTED BY - GENERAL CONTRACTOR / OWNER', 'gc');
 
-  // BOTTOM BAR + FOOTER
   page.drawRectangle({ x: 0, y: 0, width: W612, height: 0.18 * inch, color: gold });
   const ftxt  = 'A & J California Builders, Inc.  |  License # 949668  |  1261 Lincoln Ave, Suite 106, San Jose, CA 95125  |  408-690-7421';
   const ftxtW = reg.widthOfTextAtSize(ftxt, 7);
@@ -297,7 +318,6 @@ async function generateCoPdf(data) {
   const pdfBytes = await pdfDoc.save();
   return Buffer.from(pdfBytes);
 }
-
 
 // ── Routes ────────────────────────────────────────────────────
 
@@ -317,16 +337,31 @@ app.post('/api/jobs', requireAdmin, (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// PUT update job (admin)
-app.put('/api/jobs/:id', requireAdmin, (req, res) => {
-  const { job_number, job_name, active } = req.body;
-  db.prepare('UPDATE jobs SET job_number = ?, job_name = ?, active = ? WHERE id = ?').run(job_number, job_name, active ?? 1, req.params.id);
-  res.json({ success: true });
-});
-
 // DELETE job (admin)
 app.delete('/api/jobs/:id', requireAdmin, (req, res) => {
   db.prepare('UPDATE jobs SET active = 0 WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
+});
+
+// GET all active GCs
+app.get('/api/gcs', (req, res) => {
+  const gcs = db.prepare('SELECT * FROM gcs WHERE active = 1 ORDER BY name').all();
+  res.json(gcs);
+});
+
+// POST new GC (admin)
+app.post('/api/gcs', requireAdmin, (req, res) => {
+  const { name, address } = req.body;
+  if (!name) return res.status(400).json({ error: 'name required' });
+  try {
+    const result = db.prepare('INSERT INTO gcs (name, address) VALUES (?, ?)').run(name, address || '');
+    res.json({ id: result.lastInsertRowid, name, address });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// DELETE GC (admin)
+app.delete('/api/gcs/:id', requireAdmin, (req, res) => {
+  db.prepare('UPDATE gcs SET active = 0 WHERE id = ?').run(req.params.id);
   res.json({ success: true });
 });
 
@@ -367,7 +402,7 @@ function emailFooter(note) {
     </div></div>`;
 }
 
-// ── POST T&M submission ───────────────────────────────────────
+// POST T&M submission
 app.post('/api/submit/tm', async (req, res) => {
   const d = req.body;
   const mat   = parseFloat(d.material_cost) || 0;
@@ -414,7 +449,7 @@ app.post('/api/submit/tm', async (req, res) => {
   }
 });
 
-// ── POST Change Order submission ──────────────────────────────
+// POST Change Order submission
 app.post('/api/submit/co', async (req, res) => {
   const d = req.body;
   const mat   = parseFloat(d.material_cost) || 0;
@@ -455,7 +490,7 @@ app.post('/api/submit/co', async (req, res) => {
       }];
     }
     const coSendResult = await resend.emails.send(payload);
-    console.log("Resend CO send result:", JSON.stringify(coSendResult));
+    console.log('Resend CO send result:', JSON.stringify(coSendResult));
 
     if (d.submitter_email) {
       await resend.emails.send({
