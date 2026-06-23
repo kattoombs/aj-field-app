@@ -400,9 +400,11 @@
           </div>
         </div>
         <div class="jobs-list" id="admin-jobs-list">
+        <div style="display:flex;gap:10px;margin-bottom:16px;"><button onclick="showAdminTab('jobs')" id="tab-jobs" style="flex:1;padding:10px;background:#A27339;color:#FFF8F0;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Job List</button><button onclick="showAdminTab('subs')" id="tab-subs" style="flex:1;padding:10px;background:#D9D8D6;color:#140409;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Submissions Log</button></div><div id="admin-jobs-panel">
           <p style="color:#888; text-align:center; padding: 20px;">Loading jobs...</p>
         </div>
       </div>
+        </div><div id="admin-subs-panel" style="display:none;"><div id="admin-subs-list"><p style="color:#888;text-align:center;padding:20px;">Loading submissions...</p></div></div>
     </div>
 
   </div>
@@ -688,6 +690,9 @@
     }
 
     // ── Toast ──────────────────────────────────────────────
+    function showAdminTab(tab){if(tab==="jobs"){document.getElementById("admin-jobs-panel").style.display="block";document.getElementById("admin-subs-panel").style.display="none";document.getElementById("tab-jobs").style.background="#A27339";document.getElementById("tab-jobs").style.color="#FFF8F0";document.getElementById("tab-subs").style.background="#D9D8D6";document.getElementById("tab-subs").style.color="#140409";}else{document.getElementById("admin-jobs-panel").style.display="none";document.getElementById("admin-subs-panel").style.display="block";document.getElementById("tab-subs").style.background="#A27339";document.getElementById("tab-subs").style.color="#FFF8F0";document.getElementById("tab-jobs").style.background="#D9D8D6";document.getElementById("tab-jobs").style.color="#140409";loadSubmissions();}}
+    async function loadSubmissions(){const c=document.getElementById("admin-subs-list");c.innerHTML="<p style=\"color:#888;text-align:center;padding:20px;\">Loading...</p>";try{const res=await fetch(`${API}/api/submissions`,{headers:{"Authorization":`Bearer ${adminToken}`}});const list=await res.json();if(!list.length){c.innerHTML="<p style=\"color:#888;text-align:center;padding:20px;\">No submissions yet.</p>";return;}c.innerHTML=list.map(s=>{const d=s.data;const badge=s.type==="tm"?"<span style=\"background:#A27339;color:#FFF8F0;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;\">T&M</span>":"<span style=\"background:#140409;color:#FFF8F0;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;\">CO</span>";return `<div style="background:#fff;border-radius:8px;padding:14px 16px;margin-bottom:8px;box-shadow:0 1px 4px rgba(20,4,9,0.06);"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">${badge}<span style="font-size:13px;font-weight:600;color:#140409;">${d.job||"Unassigned"}</span><span style="margin-left:auto;font-size:11px;color:#999;">${s.submitted_at?s.submitted_at.slice(0,16).replace("T"," "):""}</span></div><div style="font-size:12px;color:#666;display:grid;grid-template-columns:1fr 1fr;gap:4px;">${d.date?`<span>Date: ${d.date}</span>`:""} ${d.gc_name?`<span>GC: ${d.gc_name}</span>`:""} ${d.foreman?`<span>Foreman: ${d.foreman}</span>`:""} ${d.submitted_by?`<span>By: ${d.submitted_by}</span>`:""} ${d.material_cost?`<span>Material: $${parseFloat(d.material_cost).toFixed(2)}</span>`:""} ${d.labor_cost?`<span>Labor: $${parseFloat(d.labor_cost).toFixed(2)}</span>`:""}</div>${d.description?`<div style="font-size:12px;color:#555;margin-top:6px;border-top:1px solid #eee;padding-top:6px;">${d.description}</div>`:""} ${d.office_message?`<div style="font-size:12px;color:#A27339;margin-top:4px;">Note: ${d.office_message}</div>`:""}</div>`}).join("");}catch(e){c.innerHTML="<p style=\"color:#c0392b;text-align:center;padding:20px;\">Error loading.</p>";}}
+
     let toastTimer;
     function showToast(msg, type = '') {
       const t = document.getElementById('toast');
