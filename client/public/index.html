@@ -41,13 +41,14 @@
     .home-greeting { text-align: center; margin-bottom: 48px; }
     .home-greeting h2 { font-family: var(--font-display); font-size: 28px; color: var(--dark); }
     .home-greeting p { color: #888; font-size: 15px; margin-top: 6px; }
-    .home-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    @media (max-width: 480px) { .home-cards { grid-template-columns: 1fr; } }
+    .home-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    @media (max-width: 700px) { .home-cards { grid-template-columns: 1fr; } }
     .home-card { background: var(--white); border-radius: 16px; padding: 36px 24px; text-align: center; cursor: pointer; box-shadow: var(--shadow); border: 2px solid transparent; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
     .home-card:hover, .home-card:active { border-color: var(--bronze); box-shadow: var(--shadow-lg); transform: translateY(-2px); }
     .home-card .card-icon { width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 28px; }
     .home-card.tm .card-icon { background: rgba(162,115,57,0.12); }
     .home-card.co .card-icon { background: rgba(20,4,9,0.07); }
+    .home-card.cosub .card-icon { background: rgba(162,115,57,0.12); }
     .home-card h3 { font-family: var(--font-display); font-size: 18px; color: var(--dark); margin-bottom: 6px; }
     .home-card p { font-size: 13px; color: #888; line-height: 1.4; }
     .form-screen { padding-top: 24px; }
@@ -134,8 +135,13 @@
         </div>
         <div class="home-card co" onclick="showScreen('co')">
           <div class="card-icon">📋</div>
-          <h3>Change Order</h3>
-          <p>Extra work — office receives a PDF to fill in CO#</p>
+          <h3>A&amp;J Change Order</h3>
+          <p>Extra work performed by A&amp;J crews — office receives a PDF to fill in CO#</p>
+        </div>
+        <div class="home-card cosub" onclick="showScreen('cosub')">
+          <div class="card-icon">🧰</div>
+          <h3>Subcontractor Change Order</h3>
+          <p>Extra work from your trade — tell the office your trade, company, and price</p>
         </div>
       </div>
     </div>
@@ -311,22 +317,23 @@
           </div>
         </div>
         <div class="form-card">
-          <div class="form-card-title">Cost Summary</div>
+          <div class="form-card-title">Labor & Materials</div>
           <div class="field-group">
+            <div class="field">
+              <label>Material Cost ($)</label>
+              <input type="number" name="material_cost" id="co-mat" placeholder="0.00" min="0" step="0.01">
+            </div>
             <div class="field-row">
               <div class="field">
-                <label>Material Cost ($)</label>
-                <input type="number" name="material_cost" id="co-mat" placeholder="0.00" min="0" step="0.01" oninput="updateTotal('co')">
+                <label>Hours Worked</label>
+                <input type="number" name="hours" placeholder="0.0" min="0" step="0.5">
               </div>
               <div class="field">
-                <label>Labor Cost ($)</label>
-                <input type="number" name="labor_cost" id="co-lab" placeholder="0.00" min="0" step="0.01" oninput="updateTotal('co')">
+                <label>Agreed Flat Price ($) <span style="font-weight:400;color:#999;">— if already agreed upon</span></label>
+                <input type="number" name="agreed_price" placeholder="0.00" min="0" step="0.01">
               </div>
             </div>
-            <div class="cost-total-box">
-              <span>TOTAL CHANGE ORDER AMOUNT</span>
-              <span class="total-amount" id="co-total">$0.00</span>
-            </div>
+            <p class="unassigned-note">Fill in Hours OR Agreed Price, not both. The office will calculate and confirm the total.</p>
           </div>
         </div>
         <div class="form-card">
@@ -348,6 +355,119 @@
           </div>
         </div>
         <button type="submit" class="submit-btn" id="co-submit-btn">Send Change Order to Office</button>
+      </form>
+    </div>
+
+    <!-- SUBCONTRACTOR CHANGE ORDER FORM -->
+    <div id="screen-cosub" class="form-screen hidden">
+      <div class="form-header">
+        <button class="back-btn" onclick="showScreen('home')">←</button>
+        <div class="form-title">
+          <h2>Subcontractor Change Order</h2>
+          <p>Office will review and prepare the official Change Order</p>
+        </div>
+      </div>
+      <form id="form-cosub" onsubmit="submitForm(event, 'cosub')">
+        <div class="form-card">
+          <div class="form-card-title">Job Information</div>
+          <div class="field-group">
+            <div class="field">
+              <label>Date <span class="req">*</span></label>
+              <input type="date" name="date" id="cosub-date" required>
+            </div>
+            <div class="field">
+              <label>Submitted By <span class="req">*</span></label>
+              <input type="text" name="submitted_by" placeholder="Your name" required>
+            </div>
+            <div class="field">
+              <label>Trade <span class="req">*</span></label>
+              <input type="text" name="trade" placeholder="e.g. Plumbing, HVAC, Electrical" required>
+            </div>
+            <div class="field">
+              <label>Subcontractor Company <span class="req">*</span></label>
+              <select id="cosub-sub-select" onchange="handleSubSelect()">
+                <option value="">— Select your company —</option>
+              </select>
+            </div>
+            <div class="field" id="cosub-newsub-field">
+              <label>If not listed, enter your company info</label>
+              <input type="text" id="cosub-sub-writein" placeholder="Company name" style="margin-bottom:8px;">
+              <input type="text" id="cosub-sub-address-writein" placeholder="Company address (optional)">
+              <span class="unassigned-note">Leave both blank if you selected your company above</span>
+            </div>
+            <div class="field">
+              <label>Job <span class="req">*</span></label>
+              <select name="job_select" id="cosub-job-select" onchange="handleJobSelect('cosub')">
+                <option value="">— Select a Job —</option>
+              </select>
+            </div>
+            <div class="field" id="cosub-unassigned-field">
+              <label>If not listed, write in job name</label>
+              <input type="text" name="job_writein" id="cosub-writein" placeholder="Enter job name or address">
+              <span class="unassigned-note">Leave blank if you selected a job above</span>
+            </div>
+            <div class="field">
+              <label>General Contractor</label>
+              <select name="gc_name" id="cosub-gc-select" onchange="handleGCSelect('cosub')">
+                <option value="">— Select GC —</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>GC Address</label>
+              <input type="text" name="address" id="cosub-address" placeholder="Auto-fills from GC selection">
+            </div>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-title">Extra Work</div>
+          <div class="field-group">
+            <div class="field">
+              <label>Description of Extra Work <span class="req">*</span></label>
+              <textarea name="description" placeholder="Describe the extra work being requested or performed..." style="min-height: 120px;" required></textarea>
+            </div>
+            <div class="field">
+              <label>Materials</label>
+              <textarea name="materials" placeholder="List materials required..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-title">Cost Summary</div>
+          <div class="field-group">
+            <div class="field-row">
+              <div class="field">
+                <label>Material Cost ($)</label>
+                <input type="number" name="material_cost" id="cosub-mat" placeholder="0.00" min="0" step="0.01" oninput="updateTotal('cosub')">
+              </div>
+              <div class="field">
+                <label>Labor Cost ($)</label>
+                <input type="number" name="labor_cost" id="cosub-lab" placeholder="0.00" min="0" step="0.01" oninput="updateTotal('cosub')">
+              </div>
+            </div>
+            <div class="cost-total-box">
+              <span>TOTAL AMOUNT</span>
+              <span class="total-amount" id="cosub-total">$0.00</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="confirmation-section">
+            <div class="field">
+              <label>Message to Office</label>
+              <textarea name="office_message" placeholder="Anything else the office should know..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="confirmation-section">
+            <div class="field">
+              <label>Your Email (for confirmation)</label>
+              <input type="email" name="submitter_email" placeholder="you@company.com (optional)">
+              <p>Optional — get a quick confirmation the form went through</p>
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="submit-btn" id="cosub-submit-btn">Send Change Order to Office</button>
       </form>
     </div>
 
@@ -385,10 +505,11 @@
         </div>
       </div>
       <div id="admin-panel" class="hidden">
-        <div style="display:flex;gap:10px;margin-bottom:16px;">
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
           <button onclick="showAdminTab('gcs')" id="tab-gcs" style="flex:1;padding:10px;background:#D9D8D6;color:#140409;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">GC List</button>
           <button onclick="showAdminTab('jobs')" id="tab-jobs" style="flex:1;padding:10px;background:#A27339;color:#FFF8F0;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Job List</button>
-          <button onclick="showAdminTab('subs')" id="tab-subs" style="flex:1;padding:10px;background:#D9D8D6;color:#140409;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Submissions Log</button>
+          <button onclick="showAdminTab('subcontractors')" id="tab-subcontractors" style="flex:1;padding:10px;background:#D9D8D6;color:#140409;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Subcontractors</button>
+          <button onclick="showAdminTab('log')" id="tab-log" style="flex:1;padding:10px;background:#D9D8D6;color:#140409;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Submissions Log</button>
         </div>
         <div id="admin-jobs-panel">
           <div class="add-job-form">
@@ -414,8 +535,19 @@
           </div>
           <div id="admin-gcs-list"><p style="color:#888;text-align:center;padding:20px;">Loading GCs...</p></div>
         </div>
-        <div id="admin-subs-panel" style="display:none;">
-          <div id="admin-subs-list"><p style="color:#888;text-align:center;padding:20px;">Loading submissions...</p></div>
+        <div id="admin-subcontractors-panel" style="display:none;">
+          <div class="add-job-form">
+            <h4>Add New Subcontractor</h4>
+            <div class="add-job-row">
+              <div class="field"><label>Company Name</label><input type="text" id="new-sub-name" placeholder="Company Name"></div>
+              <div class="field"><label>Address</label><input type="text" id="new-sub-address" placeholder="123 Main St, City, CA"></div>
+              <button class="add-job-btn" onclick="addSub()">+ Add</button>
+            </div>
+          </div>
+          <div id="admin-subs-list"><p style="color:#888;text-align:center;padding:20px;">Loading subcontractors...</p></div>
+        </div>
+        <div id="admin-log-panel" style="display:none;">
+          <div id="admin-log-list"><p style="color:#888;text-align:center;padding:20px;">Loading submissions...</p></div>
         </div>
       </div>
 
@@ -520,17 +652,19 @@
       setTodayDate();
       loadGCs();
       loadJobs();
+      loadSubs();
     });
 
     function setTodayDate() {
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('tm-date').value = today;
       document.getElementById('co-date').value = today;
+      document.getElementById('cosub-date').value = today;
     }
 
     function populateGCDropdowns(gcList) {
       const list = gcList || GC_LIST;
-      ['tm', 'co'].forEach(type => {
+      ['tm', 'co', 'cosub'].forEach(type => {
         const sel = document.getElementById(`${type}-gc-select`);
         list.forEach(gc => {
           sel.add(new Option(gc.name, gc.name));
@@ -573,13 +707,51 @@
     }
 
     function populateJobDropdowns(jobs) {
-      ['tm', 'co'].forEach(type => {
+      ['tm', 'co', 'cosub'].forEach(type => {
         const sel = document.getElementById(`${type}-job-select`);
         while (sel.options.length > 1) sel.remove(1);
         jobs.forEach(j => {
           sel.add(new Option(`${j.num} — ${j.name}`, `${j.num} — ${j.name}`));
         });
       });
+    }
+
+    // ── Subcontractor Data ─────────────────────────────────
+    async function loadSubs() {
+      try {
+        const res = await fetch(`${API}/api/subs`);
+        const list = await res.json();
+        populateSubDropdowns(list || []);
+      } catch (e) { console.warn('Could not load subs:', e); }
+    }
+
+    function populateSubDropdowns(list) {
+      const sel = document.getElementById('cosub-sub-select');
+      while (sel.options.length > 1) sel.remove(1);
+      list.forEach(s => {
+        const opt = new Option(s.name, s.name);
+        opt.dataset.address = s.address || '';
+        sel.add(opt);
+      });
+    }
+
+    function handleSubSelect() {
+      const sel = document.getElementById('cosub-sub-select');
+      const writeinName = document.getElementById('cosub-sub-writein');
+      const writeinAddr = document.getElementById('cosub-sub-address-writein');
+      if (sel.value) { writeinName.value = ''; writeinAddr.value = ''; }
+    }
+
+    function getSubValue() {
+      const sel = document.getElementById('cosub-sub-select');
+      if (sel.value) {
+        const opt = sel.options[sel.selectedIndex];
+        return { name: sel.value, address: opt?.dataset?.address || '' };
+      }
+      return {
+        name: document.getElementById('cosub-sub-writein').value.trim(),
+        address: document.getElementById('cosub-sub-address-writein').value.trim()
+      };
     }
 
     function handleJobSelect(type) {
@@ -594,7 +766,7 @@
     }
 
     // ── Screens ────────────────────────────────────────────
-    const screens = ['home', 'tm', 'co', 'success', 'admin'];
+    const screens = ['home', 'tm', 'co', 'cosub', 'success', 'admin'];
     function showScreen(name) {
       screens.forEach(s => document.getElementById(`screen-${s}`).classList.add('hidden'));
       document.getElementById(`screen-${name}`).classList.remove('hidden');
@@ -615,6 +787,11 @@
       const btn = document.getElementById(`${type}-submit-btn`);
       const job = getJobValue(type);
       if (!job) { showToast('Please select or enter a job name', 'error'); return; }
+      let subInfo = null;
+      if (type === 'cosub') {
+        subInfo = getSubValue();
+        if (!subInfo.name) { showToast('Please select or enter your subcontractor company', 'error'); return; }
+      }
       btn.disabled = true;
       btn.textContent = 'Sending...';
       const fd = new FormData(form);
@@ -622,6 +799,7 @@
       data.job = job;
       delete data.job_select;
       delete data.job_writein;
+      if (subInfo) { data.sub_company = subInfo.name; data.sub_address = subInfo.address; }
       try {
         const res = await fetch(`${API}/api/submit/${type}`, {
           method: 'POST',
@@ -632,9 +810,11 @@
         if (result.success) {
           form.reset();
           setTodayDate();
-          updateTotal(type);
+          if (type === 'tm' || type === 'cosub') updateTotal(type);
           const msg = type === 'co'
-            ? 'Change Order sent! Kathie will receive a PDF to add the CO# and signatures.'
+            ? 'Change Order sent! Kathie will receive a PDF to review, adjust, and add signatures.'
+            : type === 'cosub'
+            ? 'Change Order sent to the office for review.'
             : 'T&M Tag sent to the office successfully.';
           document.getElementById('success-msg').textContent = msg +
             (data.submitter_email ? ' A confirmation was sent to your email.' : '');
@@ -717,8 +897,25 @@
     async function addGC(){const name=document.getElementById("new-gc-name").value.trim();const address=document.getElementById("new-gc-address").value.trim();if(!name){showToast("Enter GC name","error");return;}await fetch(`${API}/api/gcs`,{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${adminToken}`},body:JSON.stringify({name,address})});document.getElementById("new-gc-name").value="";document.getElementById("new-gc-address").value="";await loadAdminGCs();await loadGCs();showToast("GC added!","success");}
     async function deleteGC(id){if(!confirm("Remove this GC?"))return;await fetch(`${API}/api/gcs/${id}`,{method:"DELETE",headers:{"Authorization":`Bearer ${adminToken}`}});await loadAdminGCs();await loadGCs();showToast("GC removed","success");}
 
-    function showAdminTab(tab){if(tab==="gcs"){document.getElementById("admin-jobs-panel").style.display="none";document.getElementById("admin-gcs-panel").style.display="block";document.getElementById("admin-subs-panel").style.display="none";document.getElementById("tab-gcs").style.background="#A27339";document.getElementById("tab-gcs").style.color="#FFF8F0";document.getElementById("tab-jobs").style.background="#D9D8D6";document.getElementById("tab-jobs").style.color="#140409";document.getElementById("tab-subs").style.background="#D9D8D6";document.getElementById("tab-subs").style.color="#140409";loadAdminGCs();}else if(tab==="jobs"){document.getElementById("admin-jobs-panel").style.display="block";document.getElementById("admin-subs-panel").style.display="none";document.getElementById("tab-jobs").style.background="#A27339";document.getElementById("tab-jobs").style.color="#FFF8F0";document.getElementById("tab-subs").style.background="#D9D8D6";document.getElementById("tab-subs").style.color="#140409";}else{document.getElementById("admin-jobs-panel").style.display="none";document.getElementById("admin-subs-panel").style.display="block";document.getElementById("tab-subs").style.background="#A27339";document.getElementById("tab-subs").style.color="#FFF8F0";document.getElementById("tab-jobs").style.background="#D9D8D6";document.getElementById("tab-jobs").style.color="#140409";loadSubmissions();}}
-    async function loadSubmissions(){const c=document.getElementById("admin-subs-list");c.innerHTML="<p style=\"color:#888;text-align:center;padding:20px;\">Loading...</p>";try{const res=await fetch(`${API}/api/submissions`,{headers:{"Authorization":`Bearer ${adminToken}`}});const list=await res.json();if(!list.length){c.innerHTML="<p style=\"color:#888;text-align:center;padding:20px;\">No submissions yet.</p>";return;}c.innerHTML=list.map(s=>{const d=s.data;const badge=s.type==="tm"?"<span style=\"background:#A27339;color:#FFF8F0;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;\">T&M</span>":"<span style=\"background:#140409;color:#FFF8F0;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;\">CO</span>";return `<div style="background:#fff;border-radius:8px;padding:14px 16px;margin-bottom:8px;box-shadow:0 1px 4px rgba(20,4,9,0.06);"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">${badge}<span style="font-size:13px;font-weight:600;color:#140409;">${d.job||"Unassigned"}</span><span style="margin-left:auto;font-size:11px;color:#999;">${s.submitted_at?s.submitted_at.slice(0,16).replace("T"," "):""}</span></div><div style="font-size:12px;color:#666;display:grid;grid-template-columns:1fr 1fr;gap:4px;">${d.date?`<span>Date: ${d.date}</span>`:""} ${d.gc_name?`<span>GC: ${d.gc_name}</span>`:""} ${d.foreman?`<span>Foreman: ${d.foreman}</span>`:""} ${d.submitted_by?`<span>By: ${d.submitted_by}</span>`:""} ${d.material_cost?`<span>Material: $${parseFloat(d.material_cost).toFixed(2)}</span>`:""} ${d.labor_cost?`<span>Labor: $${parseFloat(d.labor_cost).toFixed(2)}</span>`:""}</div>${d.description?`<div style="font-size:12px;color:#555;margin-top:6px;border-top:1px solid #eee;padding-top:6px;">${d.description}</div>`:""} ${d.office_message?`<div style="font-size:12px;color:#A27339;margin-top:4px;">Note: ${d.office_message}</div>`:""}</div>`}).join("");}catch(e){c.innerHTML="<p style=\"color:#c0392b;text-align:center;padding:20px;\">Error loading.</p>";}}
+    const ADMIN_TABS = ['gcs', 'jobs', 'subcontractors', 'log'];
+    const ADMIN_PANELS = { gcs: 'admin-gcs-panel', jobs: 'admin-jobs-panel', subcontractors: 'admin-subcontractors-panel', log: 'admin-log-panel' };
+    function showAdminTab(tab) {
+      ADMIN_TABS.forEach(t => {
+        document.getElementById(ADMIN_PANELS[t]).style.display = t === tab ? 'block' : 'none';
+        const btn = document.getElementById(`tab-${t}`);
+        btn.style.background = t === tab ? '#A27339' : '#D9D8D6';
+        btn.style.color = t === tab ? '#FFF8F0' : '#140409';
+      });
+      if (tab === 'gcs') loadAdminGCs();
+      else if (tab === 'subcontractors') loadAdminSubs();
+      else if (tab === 'log') loadSubmissions();
+    }
+
+    async function loadAdminSubs(){const res=await fetch(`${API}/api/subs`);const list=await res.json();const c=document.getElementById("admin-subs-list");if(!list.length){c.innerHTML="<p style=\"color:#888;text-align:center;padding:20px;\">No subcontractors yet.</p>";return;}c.innerHTML=list.map(s=>`<div class="job-item"><span class="job-name" style="flex:1;">${s.name}</span><span style="font-size:11px;color:#888;margin-right:8px;">${s.address||""}</span><button class="job-delete-btn" onclick="deleteSub(${s.id})">×</button></div>`).join("");}
+    async function addSub(){const name=document.getElementById("new-sub-name").value.trim();const address=document.getElementById("new-sub-address").value.trim();if(!name){showToast("Enter company name","error");return;}await fetch(`${API}/api/subs`,{method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${adminToken}`},body:JSON.stringify({name,address})});document.getElementById("new-sub-name").value="";document.getElementById("new-sub-address").value="";await loadAdminSubs();await loadSubs();showToast("Subcontractor added!","success");}
+    async function deleteSub(id){if(!confirm("Remove this subcontractor?"))return;await fetch(`${API}/api/subs/${id}`,{method:"DELETE",headers:{"Authorization":`Bearer ${adminToken}`}});await loadAdminSubs();await loadSubs();showToast("Subcontractor removed","success");}
+
+    async function loadSubmissions(){const c=document.getElementById("admin-log-list");c.innerHTML="<p style=\"color:#888;text-align:center;padding:20px;\">Loading...</p>";try{const res=await fetch(`${API}/api/submissions`,{headers:{"Authorization":`Bearer ${adminToken}`}});const list=await res.json();if(!list.length){c.innerHTML="<p style=\"color:#888;text-align:center;padding:20px;\">No submissions yet.</p>";return;}const badges={tm:["#A27339","T&M"],co:["#140409","A&J CO"],"cosub":["#5B4A73","SUB CO"]};c.innerHTML=list.map(s=>{const d=s.data;const bc=badges[s.type]||["#888",s.type.toUpperCase()];const badge=`<span style="background:${bc[0]};color:#FFF8F0;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;">${bc[1]}</span>`;return `<div style="background:#fff;border-radius:8px;padding:14px 16px;margin-bottom:8px;box-shadow:0 1px 4px rgba(20,4,9,0.06);"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">${badge}<span style="font-size:13px;font-weight:600;color:#140409;">${d.job||"Unassigned"}</span><span style="margin-left:auto;font-size:11px;color:#999;">${s.submitted_at?s.submitted_at.slice(0,16).replace("T"," "):""}</span></div><div style="font-size:12px;color:#666;display:grid;grid-template-columns:1fr 1fr;gap:4px;">${d.date?`<span>Date: ${d.date}</span>`:""} ${d.gc_name?`<span>GC: ${d.gc_name}</span>`:""} ${d.trade?`<span>Trade: ${d.trade}</span>`:""} ${d.sub_company?`<span>Sub: ${d.sub_company}</span>`:""} ${d.foreman?`<span>Foreman: ${d.foreman}</span>`:""} ${d.submitted_by?`<span>By: ${d.submitted_by}</span>`:""} ${d.hours?`<span>Hours: ${d.hours}</span>`:""} ${d.material_cost?`<span>Material: $${parseFloat(d.material_cost).toFixed(2)}</span>`:""} ${d.labor_cost?`<span>Labor: $${parseFloat(d.labor_cost).toFixed(2)}</span>`:""} ${d.agreed_price?`<span>Agreed Price: $${parseFloat(d.agreed_price).toFixed(2)}</span>`:""}</div>${d.description?`<div style="font-size:12px;color:#555;margin-top:6px;border-top:1px solid #eee;padding-top:6px;">${d.description}</div>`:""} ${d.office_message?`<div style="font-size:12px;color:#A27339;margin-top:4px;">Note: ${d.office_message}</div>`:""}</div>`}).join("");}catch(e){c.innerHTML="<p style=\"color:#c0392b;text-align:center;padding:20px;\">Error loading.</p>";}}
 
     let toastTimer;
     function showToast(msg, type = '') {
