@@ -1,4 +1,4 @@
-require('dotenv').config();
+equire('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const Database = require('better-sqlite3');
@@ -32,6 +32,13 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     address TEXT DEFAULT '',
+    active INTEGER DEFAULT 1
+  );
+  CREATE TABLE IF NOT EXISTS subs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    address TEXT DEFAULT '',
+    trade TEXT DEFAULT '',
     active INTEGER DEFAULT 1
   );
   CREATE TABLE IF NOT EXISTS submissions (
@@ -109,6 +116,11 @@ if (adminCount.c === 0) {
 const resend = new Resend(process.env.RESEND_API_KEY);
 const OFFICE_EMAIL = process.env.OFFICE_EMAIL || 'kathie.calbuilders@gmail.com';
 const OFFICE_EMAILS = OFFICE_EMAIL.split(',').map(e => e.trim());
+
+// A&J's internal billing rate & markup — never shown to foremen/subs, only computed
+// server-side and revealed to the office in the PDF/email so it can be reviewed and tweaked.
+const HOURLY_RATE = 70;
+const DEFAULT_MARKUP_PCT = 15;
 
 // ── PDF Generator ─────────────────────────────────────────────
 async function generateCoPdf(data) {
@@ -235,46 +247,90 @@ async function generateCoPdf(data) {
   addField('change_order_no', mL,            r1y, colW, valH + 2);
   addField('gc_proj_no',      mL + colW * 3, r1y, colW, valH + 2);
 
-  const matCost = parseFloat(data.material_cost) || 0;
-  const labCost = parseFloat(data.labor_cost)    || 0;
-  const total   = matCost + labCost;
+  // Hidden internal math: hours \u00d7 company rate (or a flat agreed price), plus O&P markup.
+  // Foremen/subs never see HOURLY_RATE or DEFAULT_MARKUP_PCT \u2014 they're only revealed here,
+  // in the office's fillable PDF, where they can be reviewed and adjusted before it goes out.
+  const matCost   = parseFloat(data.material_cost) || 0;
+  const hoursVal  = parseFloat(data.hours) || 0;
+  const agreedVal = parseFloat(data.agreed_price) || 0;
+  const labCost   = agreedVal > 0 ? agreedVal : hoursVal * HOURLY_RATE;
+  const subtotal  = matCost + labCost;
+  const ohPct     = (data.oh_pct !== undefined && data.oh_pct !== '' && !isNaN(parseFloat(data.oh_pct))) ? parseFloat(data.oh_pct) : DEFAULT_MARKUP_PCT;
+  const ohAmt     = subtotal * (ohPct / 100);
+  const total     = subtotal + ohAmt;
 
   const labelW  = 3.1 * inch;
   const amtW    = 1.75 * inch;
   const tableX  = mL + (fW - labelW - amtW) / 2;
-  const finRowH = 0.27 * inch;
-  const finTop  = descY - 0.28 * inch;
+  const finRowH = 0.26 * inch;
+  let   cursorY = descY - 0.28 * inch;
 
-  const finRows = [
-    { label: 'Labor:',                    val: labCost > 0 ? labCost.toFixed(2) : '', fillable: false, total: false },
-    { label: 'Material:',                 val: matCost > 0 ? matCost.toFixed(2) : '', fillable: false, total: false },
-    { label: 'P/O:',                      val: '', fillable: true,  total: false, fieldName: 'po' },
-    { label: 'Total Change Order:',       val: '', fillable: true,  total: true,  fieldName: 'total_co' },
-    { label: 'Original Contract Amount:', val: '', fillable: true,  total: false, fieldName: 'original_contract' },
-    { label: 'Previous Change Orders:',   val: '', fillable: true,  total: false, fieldName: 'previous_cos' },
-    { label: 'This Change Order:',        val: '', fillable: true,  total: false, fieldName: 'this_co' },
-    { label: 'New Contract Amount:',      val: '', fillable: true,  total: true,  fieldName: 'new_contract' },
-  ];
-
-  finRows.forEach((row, i) => {
-    const ry  = finTop - (i + 1) * finRowH;
-    const bgL = row.total ? charcoal : goldTint;
-    const fgL = row.total ? white    : charcoal;
-    const fnt = row.total ? bold     : reg;
-    page.drawRectangle({ x: tableX, y: ry, width: labelW, height: finRowH, color: bgL, borderColor: borderC, borderWidth: 0.6 });
-    page.drawText(row.label, { x: tableX + 8, y: ry + 7, size: 9, font: fnt, color: fgL });
-    page.drawRectangle({ x: tableX + labelW, y: ry, width: amtW, height: finRowH, color: white, borderColor: borderC, borderWidth: 0.6 });
-    page.drawText('$', { x: tableX + labelW + 6, y: ry + 7, size: 9, font: reg, color: midGray });
-    if (row.fillable) {
-      const ff = form.createTextField(row.fieldName);
-      ff.setText('');
-      ff.addToPage(page, { x: tableX + labelW + 18, y: ry + 2, width: amtW - 22, height: finRowH - 4, borderWidth: 0, backgroundColor: white, textColor: charcoal, font: reg, fontSize: 9 });
-    } else if (row.val) {
-      page.drawText(row.val, { x: tableX + labelW + 20, y: ry + 7, size: 9, font: reg, color: charcoal });
+  const drawRow = (label, val, opts = {}) => {
+    const h   = opts.height || finRowH;
+    const ry  = cursorY - h;
+    const bgL = opts.dark ? charcoal : goldTint;
+    const fgL = opts.dark ? white    : charcoal;
+    const fnt = opts.bold || opts.dark ? bold : reg;
+    page.drawRectangle({ x: tableX, y: ry, width: labelW, height: h, color: bgL, borderColor: borderC, borderWidth: 0.6 });
+    page.drawText(label, { x: tableX + 8, y: ry + h / 2 - 3.5, size: 9, font: fnt, color: fgL });
+    page.drawRectangle({ x: tableX + labelW, y: ry, width: amtW, height: h, color: white, borderColor: borderC, borderWidth: 0.6 });
+    page.drawText('$', { x: tableX + labelW + 6, y: ry + h / 2 - 3.5, size: 9, font: reg, color: midGray });
+    if (opts.fillable) {
+      const ff = form.createTextField(opts.fieldName);
+      ff.setText(opts.defaultVal || '');
+      ff.addToPage(page, { x: tableX + labelW + 18, y: ry + 2, width: amtW - 22, height: h - 4, borderWidth: 0, backgroundColor: white, textColor: charcoal, font: reg, fontSize: 9 });
+    } else if (val) {
+      page.drawText(val, { x: tableX + labelW + 20, y: ry + h / 2 - 3.5, size: 9, font: reg, color: charcoal });
     }
-  });
+    cursorY = ry;
+    return ry;
+  };
 
-  const authY   = finTop - finRows.length * finRowH - 0.3 * inch;
+  drawRow('Labor:',     labCost > 0 ? labCost.toFixed(2) : '');
+  drawRow('Materials:', matCost > 0 ? matCost.toFixed(2) : '');
+  cursorY -= 0.03 * inch;
+  drawRow('Subtotal:', subtotal.toFixed(2), { bold: true });
+
+  {
+    const h  = finRowH;
+    const ry = cursorY - h;
+    page.drawRectangle({ x: tableX, y: ry, width: labelW, height: h, color: goldTint, borderColor: borderC, borderWidth: 0.6 });
+    page.drawText('Overhead & Profit', { x: tableX + 8, y: ry + h / 2 - 3.5, size: 9, font: reg, color: charcoal });
+    const pctFieldW = 0.5 * inch;
+    const pctField  = form.createTextField('oh_pct');
+    pctField.setText(String(ohPct));
+    pctField.addToPage(page, { x: tableX + labelW - pctFieldW - 14, y: ry + 3, width: pctFieldW, height: h - 6, borderWidth: 0.6, borderColor: gold, backgroundColor: white, textColor: charcoal, font: bold, fontSize: 9 });
+    page.drawText('%', { x: tableX + labelW - 10, y: ry + h / 2 - 3.5, size: 8, font: reg, color: midGray });
+    page.drawRectangle({ x: tableX + labelW, y: ry, width: amtW, height: h, color: white, borderColor: borderC, borderWidth: 0.6 });
+    page.drawText('$', { x: tableX + labelW + 6, y: ry + h / 2 - 3.5, size: 9, font: reg, color: midGray });
+    const ohField = form.createTextField('oh_amount');
+    ohField.setText(ohAmt > 0 ? ohAmt.toFixed(2) : '');
+    ohField.addToPage(page, { x: tableX + labelW + 18, y: ry + 2, width: amtW - 22, height: h - 4, borderWidth: 0, backgroundColor: white, textColor: charcoal, font: reg, fontSize: 9 });
+    cursorY = ry;
+  }
+
+  cursorY -= 0.06 * inch;
+  {
+    const h  = 0.42 * inch;
+    const ry = cursorY - h;
+    page.drawRectangle({ x: tableX, y: ry, width: labelW + amtW, height: h, color: charcoal });
+    page.drawText('COST OF THIS CHANGE ORDER', { x: tableX + 10, y: ry + h / 2 + 2, size: 9, font: bold, color: goldLight });
+    page.drawText('Subtotal + Overhead & Profit \u2014 editable', { x: tableX + 10, y: ry + h / 2 - 10, size: 6.5, font: italic, color: rgb(0.75, 0.75, 0.75) });
+    const totalField = form.createTextField('total_co');
+    totalField.setText(total > 0 ? total.toFixed(2) : '');
+    totalField.addToPage(page, { x: tableX + labelW + amtW - 1.5 * inch - 8, y: ry + h / 2 - 11, width: 1.5 * inch, height: 22, borderWidth: 0, backgroundColor: rgb(0.16, 0.16, 0.16), textColor: gold, font: bold, fontSize: 16 });
+    cursorY = ry;
+  }
+
+  cursorY -= 0.16 * inch;
+  drawRow('P/O:', '', { fillable: true, fieldName: 'po' });
+  cursorY -= 0.05 * inch;
+  drawRow('Original Contract Amount:', '', { fillable: true, fieldName: 'original_contract' });
+  drawRow('Previous Change Orders:',   '', { fillable: true, fieldName: 'previous_cos' });
+  drawRow('This Change Order:',        '', { fillable: true, fieldName: 'this_co', defaultVal: total > 0 ? total.toFixed(2) : '' });
+  drawRow('New Contract Amount:',      '', { fillable: true, fieldName: 'new_contract', dark: true, bold: true });
+
+  const authY = cursorY - 0.3 * inch;
   const authTxt = 'In accordance with the subcontract agreement on the above-mentioned project, please add/deduct work requested.';
   const authW   = italic.widthOfTextAtSize(authTxt, 8);
   page.drawText(authTxt, { x: (W612 - authW) / 2, y: authY, size: 8, font: italic, color: midGray });
@@ -365,6 +421,28 @@ app.delete('/api/gcs/:id', requireAdmin, (req, res) => {
   res.json({ success: true });
 });
 
+// GET all active Subcontractors
+app.get('/api/subs', (req, res) => {
+  const subs = db.prepare('SELECT * FROM subs WHERE active = 1 ORDER BY name').all();
+  res.json(subs);
+});
+
+// POST new Subcontractor (admin)
+app.post('/api/subs', requireAdmin, (req, res) => {
+  const { name, address, trade } = req.body;
+  if (!name) return res.status(400).json({ error: 'name required' });
+  try {
+    const result = db.prepare('INSERT INTO subs (name, address, trade) VALUES (?, ?, ?)').run(name, address || '', trade || '');
+    res.json({ id: result.lastInsertRowid, name, address, trade });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// DELETE Subcontractor (admin)
+app.delete('/api/subs/:id', requireAdmin, (req, res) => {
+  db.prepare('UPDATE subs SET active = 0 WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
+});
+
 // ── Email helpers ─────────────────────────────────────────────
 function emailHeader(title) {
   return `<div style="font-family: Georgia, serif; max-width: 620px; margin: 0 auto;">
@@ -391,6 +469,27 @@ function emailCostBox(mat, lab, total, label) {
       <tr style="border-top: 1px solid #A27339;">
         <td style="padding-top: 10px; font-size: 15px; font-weight: bold; color: #A27339;">${label}</td>
         <td style="text-align:right; padding-top: 10px; font-size: 18px; font-weight: bold; color: #A27339;">$${total}</td>
+      </tr>
+    </table>
+  </div>`;
+}
+
+function emailCoBreakdown(matCost, hours, agreedPrice, ohPctIn) {
+  const HOURLY = HOURLY_RATE;
+  const lab = agreedPrice > 0 ? agreedPrice : hours * HOURLY;
+  const sub = matCost + lab;
+  const ohPct = (ohPctIn !== undefined && ohPctIn !== '' && !isNaN(parseFloat(ohPctIn))) ? parseFloat(ohPctIn) : DEFAULT_MARKUP_PCT;
+  const oh = sub * (ohPct / 100);
+  const total = sub + oh;
+  return `<div style="background: #140409; border-radius: 6px; padding: 18px 20px; margin-top: 20px;">
+    <table style="width: 100%; color: #FFF8F0; font-size: 13px;">
+      <tr><td>Labor (${hours ? hours + ' hrs @ $' + HOURLY + '/hr' : (agreedPrice ? 'agreed price' : '\u2014')})</td><td style="text-align:right;">$${lab.toFixed(2)}</td></tr>
+      <tr><td>Material Cost</td><td style="text-align:right;">$${matCost.toFixed(2)}</td></tr>
+      <tr><td>Subtotal</td><td style="text-align:right;">$${sub.toFixed(2)}</td></tr>
+      <tr><td>Overhead &amp; Profit (${ohPct}%)</td><td style="text-align:right;">$${oh.toFixed(2)}</td></tr>
+      <tr style="border-top: 1px solid #A27339;">
+        <td style="padding-top: 10px; font-size: 15px; font-weight: bold; color: #A27339;">TOTAL CHANGE ORDER AMOUNT</td>
+        <td style="text-align:right; padding-top: 10px; font-size: 18px; font-weight: bold; color: #A27339;">$${total.toFixed(2)}</td>
       </tr>
     </table>
   </div>`;
@@ -449,12 +548,14 @@ app.post('/api/submit/tm', async (req, res) => {
   }
 });
 
-// POST Change Order submission
+// POST Change Order submission (A&J's own foremen \u2014 hours-based, hidden rate/markup)
 app.post('/api/submit/co', async (req, res) => {
   const d = req.body;
-  const mat   = parseFloat(d.material_cost) || 0;
-  const lab   = parseFloat(d.labor_cost)    || 0;
-  const total = mat + lab;
+  const mat    = parseFloat(d.material_cost) || 0;
+  const hours  = parseFloat(d.hours) || 0;
+  const agreed = parseFloat(d.agreed_price) || 0;
+  const lab    = agreed > 0 ? agreed : hours * HOURLY_RATE;
+  const total  = mat + lab;
 
   db.prepare('INSERT INTO submissions (type, data) VALUES (?, ?)').run('co', JSON.stringify(d));
 
@@ -462,7 +563,7 @@ app.post('/api/submit/co', async (req, res) => {
   try { pdfBuffer = await generateCoPdf(d); } catch (e) { console.error('PDF error:', e); }
 
   const html = emailHeader('Change Order — Field Submission')
-    + `<p style="font-size:12px; color:#666; border-left:3px solid #A27339; padding-left:10px; margin-bottom:20px;">PDF attached — open to add CO#, GC Project#, contract amounts, and obtain signatures.</p>`
+    + `<p style="font-size:12px; color:#666; border-left:3px solid #A27339; padding-left:10px; margin-bottom:20px;">PDF attached \u2014 open to review/adjust the O&amp;P %, add CO#, GC Project#, contract amounts, and obtain signatures.</p>`
     + `<table style="width:100%; border-collapse:collapse;">`
     + emailRow('Date', d.date)
     + emailRow('Submitted By', d.submitted_by)
@@ -471,9 +572,11 @@ app.post('/api/submit/co', async (req, res) => {
     + emailRow('Job Address', d.address)
     + emailRow('Description of Extra Work', d.description)
     + emailRow('Materials', d.materials)
+    + emailRow('Hours Worked', d.hours)
+    + (agreed > 0 ? emailRow('Agreed Flat Price', `$${agreed.toFixed(2)}`) : '')
     + (d.office_message ? emailRow('📝 Message to Office', d.office_message) : '')
     + `</table>`
-    + emailCostBox(mat.toFixed(2), lab.toFixed(2), total.toFixed(2), 'TOTAL CHANGE ORDER AMOUNT')
+    + emailCoBreakdown(mat, hours, agreed, d.oh_pct)
     + emailFooter();
 
   try {
@@ -492,6 +595,57 @@ app.post('/api/submit/co', async (req, res) => {
     const coSendResult = await resend.emails.send(payload);
     console.log('Resend CO send result:', JSON.stringify(coSendResult));
 
+    if (d.submitter_email) {
+      await resend.emails.send({
+        from: 'AJ Field App <field@bayareacaliforniabuilders.com>',
+        to: d.submitter_email,
+        subject: `✓ Change Order Received — ${d.job || 'Unassigned'}`,
+        html: `<p style="font-family:sans-serif;">Your change order for <strong>${d.job || 'Unassigned'}</strong> on ${d.date} was received. Total: <strong>$${total.toFixed(2)}</strong></p>`
+      });
+    }
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Email error:', e);
+    res.json({ success: true, emailWarning: 'Saved but email may not have sent.' });
+  }
+});
+
+// POST Subcontractor Change Order submission (sub's own trade/company + price \u2014 no hidden
+// rate math; this is the sub's own price to A&J, reviewed by the office before it feeds into
+// A&J's own Change Order to the GC/owner).
+app.post('/api/submit/cosub', async (req, res) => {
+  const d   = req.body;
+  const mat = parseFloat(d.material_cost) || 0;
+  const lab = parseFloat(d.labor_cost)    || 0;
+  const total = mat + lab;
+
+  db.prepare('INSERT INTO submissions (type, data) VALUES (?, ?)').run('co-sub', JSON.stringify(d));
+
+  const html = emailHeader('Subcontractor Change Order — Field Submission')
+    + `<p style="font-size:12px; color:#666; border-left:3px solid #A27339; padding-left:10px; margin-bottom:20px;">Submitted directly by a subcontractor \u2014 use these figures to prepare A&amp;J's own Change Order to the GC/owner.</p>`
+    + `<table style="width:100%; border-collapse:collapse;">`
+    + emailRow('Date', d.date)
+    + emailRow('Submitted By', d.submitted_by)
+    + emailRow('Trade', d.trade)
+    + emailRow('Subcontractor Company', d.sub_company)
+    + emailRow('Subcontractor Address', d.sub_address)
+    + emailRow('Job', d.job)
+    + emailRow('General Contractor', d.gc_name)
+    + emailRow('Job Address', d.address)
+    + emailRow('Description of Extra Work', d.description)
+    + emailRow('Materials', d.materials)
+    + (d.office_message ? emailRow('📝 Message to Office', d.office_message) : '')
+    + `</table>`
+    + emailCostBox(mat.toFixed(2), lab.toFixed(2), total.toFixed(2), 'TOTAL SUB CHANGE ORDER AMOUNT')
+    + emailFooter();
+
+  try {
+    await resend.emails.send({
+      from: 'AJ Field App <field@bayareacaliforniabuilders.com>',
+      to: OFFICE_EMAILS,
+      subject: `Sub Change Order — ${d.trade || 'Trade'} — ${d.sub_company || 'Subcontractor'} — ${d.job || 'Unassigned'}`,
+      html
+    });
     if (d.submitter_email) {
       await resend.emails.send({
         from: 'AJ Field App <field@bayareacaliforniabuilders.com>',
